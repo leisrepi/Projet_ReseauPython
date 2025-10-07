@@ -1,7 +1,7 @@
 class LoginMenu:
 	def __init__(self, controller):
 		self.controller = controller
-		self.root = tk.Tk()
+		self.root = controller.root
 		self.root.title("Connexion")
 		self.root.geometry("400x250")
 
@@ -15,7 +15,6 @@ class LoginMenu:
 
 		tk.Button(self.root, text="Se connecter", font=H3_FONT, command=self.on_login).pack(pady=20)
 
-		self.root.mainloop()
 
 	def on_login(self):
 		email = self.email_entry.get()
@@ -30,7 +29,6 @@ class MenuSimple:
 		self.root.geometry("400x200")
 		btn = tk.Button(self.root, text="Cliquez-moi", font=H2_FONT, command=self.on_button_click)
 		btn.pack(expand=True)
-		self.root.mainloop()
 
 	def on_button_click(self):
 		self.controller.on_button_click()
