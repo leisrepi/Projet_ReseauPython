@@ -1,28 +1,41 @@
-#To Do : renvoyer l'exception SNMaskErrorException
+
 from ipaddress import IPv4Address, IPv4Network
-from Subnet import define_mask_by_ip_class#, create_network
+from Subnet import define_mask_by_ip_class
 
 IpAddress = "192.168.3.55"
 SNMask = "255.255.128.0"
 
 #Retourne l'Ip du réseau et son adresse broadcast et le sous réseaux si possible
 def get_network_information_from_ip_address_and_mask(IpAddress, SNMask):
-    """Retourne l'adresse du réseaux et son broadcast et aussi le sous-réseaux avec son broadcast.
-        Si le sous réseaux est impossible il renverra 'None' pour le sous réseaux et son broadcast.
-        -------------------------------------------
-        Peut lever l'exception SNMaskErrorException si le mask n'est pas correcte."""
+
+    """ Retourne les infos du réseaux.
+
+        Args:
+            IpAddress (String) : adresse ip en format string
+            SNMask (String) : masque lier à l'adresse ip en format string
+        Returns :
+            Adresse du réseaux et son broadcast. Adresse sous-réseaux et son broadcast.
+            Si le sous réseaux est impossible il renverra 'None' pour le sous réseaux et son broadcast.
+
+        Raise :
+            SNMaskErrorException si le masque n'est pas correcte."""
+    
     IpClient = IPv4Address(IpAddress)
     netMask = define_mask_by_ip_class(IpClient)
     IpNetwork = IPv4Network(IpAddress+"/"+netMask, strict=False)
+
     #vérification de l'appartenance du masque dde sous réseaux par rapport a celui du réseaux (vérification que celui-ci n'est pas plus grand)
     if(str(IpNetwork.netmask) < SNMask):
-        raise #SNMaskErrorException #gérer l'erreur dans le cas ou le sous réseaux est plus grand que le réseaux lui meme
+        raise #SNMaskErrorException 
+    #TODO: gérer l'erreur dans le cas ou le sous réseaux est plus grand que le réseaux lui meme (enlever le #)
+
     if(IpNetwork.netmask == SNMask): #Vérification de la possibilité de sous-réseaux
         return IpNetwork.network_address, IpNetwork.broadcast_address, None, None
+    
     for SNIp in IpNetwork.hosts(): #boucle de recherche du sous réseaux dans lequel se trouve l'adresse Ip du client
         SNIpAddress = SNIp
     
     SNBroadcast = IPv4Network(str(SNIpAddress)+"/"+SNMask, strict=False).broadcast_address
     return IpNetwork.network_address, IpNetwork.broadcast_address, SNIpAddress, SNBroadcast
 
-print(get_network_information_from_ip_address_and_mask(IpAddress, SNMask))
+print(get_network_information_from_ip_address_and_mask(IpAddress, SNMask)) 
