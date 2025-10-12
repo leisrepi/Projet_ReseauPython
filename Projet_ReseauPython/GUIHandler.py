@@ -39,10 +39,77 @@ class Page1(tk.Frame):
 	def __init__(self, parent, controller):
 		super().__init__(parent, pady=10)
 		self.controller = controller
-		label = tk.Label(self, text="Page 1", font=H2_FONT)
-		label.pack(pady=10, padx=10)
+		label = tk.Label(self, text="Calcul réseau", font=H2_FONT)
+		label.grid(row=0, column=0, columnspan=2 , padx=5, pady=5)
 
 		
+
+
+		#--------------------------------------|Point 1 (gauche)|--------------------------------------
+		framePoint1 = tk.Frame(self)
+		framePoint1.grid(row=1, column=0, padx=5, pady=5)
+		#--------------------------------------
+		#IPV4
+		tk.Label(framePoint1, text="Adresse IP:", font=P2_FONT).grid(row=0, column=0, padx=5, pady=5, sticky="e")
+		self.ip_entry = tk.Entry(framePoint1, font=P2_FONT, width=20)
+		self.ip_entry.grid(row=0, column=1, padx=5, pady=5)
+		
+		#MASK
+		tk.Label(framePoint1, text="Masque:", font=P2_FONT).grid(row=0, column=2, padx=5, pady=5, sticky="e")
+		self.mask_entry = tk.Entry(framePoint1, font=P2_FONT, width=20)
+		self.mask_entry.grid(row=0, column=3, padx=5, pady=5)
+
+		#--------------------------------------
+		#Output Adresse reseau
+		tk.Label(framePoint1, text="Adresse Reseau:", font=P2_FONT).grid(row=1, column=0, padx=5, pady=5, sticky="e")
+		self.network_output= tk.Entry(framePoint1, font=P2_FONT, width=20, state="readonly")
+		self.network_output.grid(row=1, column=1, padx=5, pady=5)
+		#Output Adresse broadcast
+		tk.Label(framePoint1, text="Adresse Broadcast:", font=P2_FONT).grid(row=1, column=2, padx=5, pady=5, sticky="e")
+		self.broadcast_output= tk.Entry(framePoint1, font=P2_FONT, width=20, state="readonly")
+		self.broadcast_output.grid(row=1, column=3, padx=5, pady=5)
+
+		#--------------------------------------
+		#Output adresse sous reseau
+		tk.Label(framePoint1, text="Adresse Sous-Réseau:", font=P2_FONT).grid(row=2, column=0, padx=5, pady=5, sticky="e")
+		self.subnet_output= tk.Entry(framePoint1, font=P2_FONT, width=20, state="readonly")
+		self.subnet_output.grid(row=2, column=1, padx=5, pady=5)
+		#Output Adresse broadcast sous reseau
+		tk.Label(framePoint1, text="Adresse Broadcast Sous-Réseau:", font=P2_FONT).grid(row=2, column=2, padx=5, pady=5, sticky="e")
+		self.subnet_broadcast_output= tk.Entry(framePoint1, font=P2_FONT, width=20, state="readonly")
+		self.subnet_broadcast_output.grid(row=2, column=3, padx=5, pady=5)
+
+
+		#--------------------------------------|Point 2 (droite)|--------------------------------------
+		framePoint2 = tk.Frame(self)
+		framePoint2.grid(row=1, column=1, padx=5, pady=5)
+		#--------------------------------------
+		#IPV4
+		tk.Label(framePoint2, text="Adresse IP:", font=P2_FONT).grid(row=0, column=0, padx=5, pady=5, sticky="e")
+		self.ip_entry2 = tk.Entry(framePoint2, font=P2_FONT, width=20)
+		self.ip_entry2.grid(row=0, column=1, padx=5, pady=5)
+		#Adresse reseau
+		tk.Label(framePoint2, text="Adresse Reseau:", font=P2_FONT).grid(row=0, column=2, padx=5, pady=5, sticky="e")
+		self.network_output2= tk.Entry(framePoint2, font=P2_FONT, width=20, state="readonly")
+		self.network_output2.grid(row=0, column=3, padx=5, pady=5)
+		#--------------------------------------
+		#Output 1ere adresse réseau/sous réseau
+		tk.Label(framePoint2, text="1ère Adresse Utilisable:", font=P2_FONT).grid(row=1, column=0, padx=5, pady=5, sticky="e")
+		self.first_usable_output= tk.Entry(framePoint2, font=P2_FONT, width=20, state="readonly")
+		self.first_usable_output.grid(row=1, column=1, padx=5, pady=5)
+		#Output Derniere adresse réseau/sous réseau
+		tk.Label(framePoint2, text="Dernière Adresse Utilisable:", font=P2_FONT).grid(row=1, column=2, padx=5, pady=5, sticky="e")
+		self.last_usable_output= tk.Entry(framePoint2, font=P2_FONT, width=20, state="readonly")
+		self.last_usable_output.grid(row=1, column=3, padx=5, pady=5)
+		#---------------------------------------
+		#Bare appartien au réseau ?
+		self.belongs_output = tk.Label(framePoint2,
+		    text="L'adresse IP appartient-elle au réseau ?",
+			font=P2_FONT,
+			background="lightgrey"
+			).grid(row=2, column=0, columnspan=4, padx=5, pady=5, sticky="e")
+		
+
 
 class Page2(tk.Frame):
 	def __init__(self, parent, controller):
@@ -102,8 +169,6 @@ class MainApp:
 
 		self.pageSelector = PageSelector(self.root, self)
 		self.pageSelector.grid(row=2, column=0, sticky="ns")
-		# Si vous voulez un autre grid, décommentez et placez correctement :
-		# self.pageSelector.grid(row=2, column=0, sticky="ew")
 		self.show_page("Page1")
 
 	def on_button_click(self):
