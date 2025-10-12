@@ -17,7 +17,7 @@ class GUIController:
 
     def __init__(self):
         self.root = tk.Tk()
-        self.root.title("Application")
+        self.root.title("NO_NAME_SET")
         self.view = GUIHandler.LoginMenu(self)
         self.run()
 
@@ -30,14 +30,19 @@ class GUIController:
         #TODO : verifier si les identifiants sont corrects avant d'ouvrir la fenetre principale
         #TODO : ouvrir la fenetre en lui fournissant l'id de l'utilisateur
         self.clean_view()
-        self.view = GUIHandler.MenuSimple(self)
-        self.start()
+        self.view = GUIHandler.MainApp(self)
+       
     
     def clean_view(self):
-        self.view.root.destroy()
+        self.root.destroy()
+        self.root = tk.Tk()
+        self.root.title("NO_NAME_SET")
 
     def run(self):
         self.root.mainloop()
+
+    def show_page(self, page_name):
+        self.view.show_page(page_name)
 
 
 '''
