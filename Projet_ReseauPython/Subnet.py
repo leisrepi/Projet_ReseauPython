@@ -38,9 +38,9 @@ def calculate_pas(nb_machines):
 # Définition du masque en fonction de la classe d'adresse IP classfull (renvoie None si l'adresse ne peut pas avoir de masque)
 def define_mask_by_ip_class(adresse_ip):
     #IPV4Network reprend la première adresse et le masque
-    CLASS_A = IPv4Address(("0.0.0.0", "128.0.0.0"))
-    CLASS_B = IPv4Address(("128.0.0.0", "192.0.0.0"))
-    CLASS_C = IPv4Address(("192.0.0.0", "224.0.0.0"))
+    CLASS_A = IPv4Network(("0.0.0.0", "128.0.0.0"))
+    CLASS_B = IPv4Network(("128.0.0.0", "192.0.0.0"))
+    CLASS_C = IPv4Network(("192.0.0.0", "224.0.0.0"))
     #CLASS_D = IPv4Network(("224.0.0.0", "240.0.0.0"))
     if adresse_ip in CLASS_A:
         return "255.0.0.0"
