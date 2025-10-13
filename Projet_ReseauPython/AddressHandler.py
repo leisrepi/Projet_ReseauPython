@@ -26,7 +26,7 @@ def is_ip_valid(address):
         return False
     
 # Création d'une adresse IP à partir d'une chaîne de caractères (renvoie None si l'adresse n'est pas valide)
-def create_ip_adress(ip_string):
+def create_ip_address(ip_string):
     """Crée une adresse IP à partir d'une chaîne de caractères
 
         Args:
