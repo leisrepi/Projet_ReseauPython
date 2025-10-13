@@ -3,8 +3,6 @@
 # --------------------------------------
 
 from ipaddress import IPv4Address, AddressValueError
-# Exceptions personnalisées
-from AppException import TooManyMachinesException
 
 # --------------------------------------
 #             Fonctions
