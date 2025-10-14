@@ -30,10 +30,13 @@ def create_ip_address(ip_string):
     """Crée une adresse IP à partir d'une chaîne de caractères
 
         Args:
-            ip_string (string): chaîne de caractères de l'adresse IP
+            ip_string (string) : chaîne de caractères de l'adresse IP
 
         Returns: 
-            return (IPv4Adress) : Renvoie une instance de IPv4Address ou lève une AdressValueError si l'adresse n'est pas valide
+            return (IPv4Adress) : Renvoie une instance de IPv4Address 
+
+        Raises:  
+            AdressValueError si l'adresse n'est pas valide
     """
     try:
         return IPv4Address(ip_string)
