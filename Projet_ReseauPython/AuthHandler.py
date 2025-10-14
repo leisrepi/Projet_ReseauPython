@@ -1,5 +1,5 @@
 import bcrypt
-# from DBHandler import is_user_on_db
+from DBHandler import is_user_on_db
 def passwd_encrypt(passwd):
     """Chiffre un mot de passe avec bcrypt.
         Args:
@@ -18,7 +18,7 @@ def passwd_encrypt(passwd):
 
     return hashedDepart
 
-def passwd_verify(passwd, hashed):
+def password_verification(passwd, hashed):
     """Vérifie un mot de passe avec son hash bcrypt.
         Args:
             passwd (string) : chaîne de caractères du mot de passe à vérifier
