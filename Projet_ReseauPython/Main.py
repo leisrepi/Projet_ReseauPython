@@ -10,6 +10,6 @@ print ("j'ai refussioner avec la branche main")
 
 #GUIHandlerOld.init_GUI()
 
-guiController =  GUIController.GUIController()
+guiController = GUIController.GUIController.get_instance()
 
 
