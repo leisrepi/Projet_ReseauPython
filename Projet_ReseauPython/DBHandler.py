@@ -1,15 +1,13 @@
 import sqlite3 as sq
+import AuthHandler as ath
 
+#Ouverture de la db
+conn = sq.connect('DecoupeUtilisateurDB.db')
+cursor = conn.cursor()
+cursor.execute("PRAGMA foreign_keys = ON;")
 
 def create_db():
-    # Connexion DB
-    conn = sq.connect('DecoupeUtilisateurDB.db')
-    cursor = conn.cursor()
-
-    # Activation clés étrangères
-    cursor.execute("PRAGMA foreign_keys = ON;")
-
-    # Création des tables
+    # Création des tables requises si non-existantes
     cursor.executescript('''
     CREATE TABLE IF NOT EXISTS Utilisateur (
         Pseudo TEXT NOT NULL PRIMARY KEY,
@@ -17,12 +15,11 @@ def create_db():
     );
 
     CREATE TABLE IF NOT EXISTS DecoupeReseau (
-        idDR TEXT NOT NULL,
+        IdDR TEXT NOT NULL,
         Pseudo TEXT NOT NULL,
         AdresseIP TEXT NOT NULL,
         Masque TEXT NOT NULL,
-        IsClassfull BOOLEAN NOT NULL DEFAULT 0,
-        PRIMARY KEY (idDR, Pseudo),
+        PRIMARY KEY (IdDR, Pseudo),
         FOREIGN KEY (Pseudo) REFERENCES Utilisateur(Pseudo)
             ON DELETE CASCADE ON UPDATE CASCADE
     );
@@ -31,62 +28,46 @@ def create_db():
         NumSR INTEGER NOT NULL,
         NbMachine INTEGER NOT NULL DEFAULT 0,
         IdDR TEXT NOT NULL,
-        Pseudo TEXT NOT NULL,
-        PRIMARY KEY (NumSR, IdDR, Pseudo),
-        FOREIGN KEY (IdDR, Pseudo)
-            REFERENCES DecoupeReseau(idDR, Pseudo)
+        PRIMARY KEY (NumSR, IdDR),
+        FOREIGN KEY (IdDR)
+            REFERENCES DecoupeReseau(IdDR)
             ON DELETE CASCADE ON UPDATE CASCADE
     );
     ''')
 
     conn.commit()
-    cursor.close()
-    conn.close()
-
-    print("DB OK")
+    print("DB créer")
 
 def is_user_on_db(pseudo, motdepasse):
-    conn = sq.connect('DecoupeUtilisateurDB.db')
-    cursor = conn.cursor()
-    cursor.execute("PRAGMA foreign_keys = ON;")
-
-    cursor.execute("""
-        SELECT * FROM Utilisateur 
-        WHERE Pseudo = ? AND MotDePasse = ?
-    """, (pseudo, motdepasse))
-
-    user = cursor.fetchone()
-    conn.close()
-
-    return user is not None
+    #récuperation du mdp hashé
+    cursor.execute(""" SELECT MotDePasse FROM Utilisateur WHERE Pseudo = ? """, (pseudo,))
+    hashedMDP = cursor.fetchone()
+    #vérification du mdp et renvoie d'acceptation ou de refus
+    return ath.password_verification(motdepasse, hashedMDP) 
     
 def get_user_subnetting(pseudo, id_subnetting):
-    conn = sq.connect('DecoupeUtilisateurDB.db')
-    cursor = conn.cursor()
-    cursor.execute("PRAGMA foreign_keys = ON;")
+    #Vérification de l'utilisateur et recherche de sa découpe dans la db
+    cursor.execute(""" SELECT * FROM DecoupeReseau WHERE Pseudo = ? AND IdDR = ? """, (pseudo, id_subnetting))
+    return cursor.fetchall()
 
-    cursor.execute("""
-        SELECT * FROM DecoupeReseau 
-        WHERE Pseudo = ? AND idDR = ?
-    """, (pseudo, id_subnetting))
-
-def insert_user():
-    conn = sq.connect('DecoupeUtilisateurDB.db')
-    cursor = conn.cursor()
-    cursor.execute("PRAGMA foreign_keys = ON;")
-
-    cursor.execute("insert into Utilisateur(pseudo, MotDePasse) values (?, ?)", ('Babar', 'Elephant01'))
+def insert_user(pseudo, mdp):
+    mdp = ath.password_encrypt(mdp)
+    cursor.execute("insert into Utilisateur(pseudo, MotDePasse) values (?, ?)", (pseudo, mdp))
     conn.commit()
-    conn.close()
     print('Utilisateur crée !')
 
 def delete_user(user):
+    cursor.execute("DELETE FROM Utilisateur WHERE Pseudo = ?", (user,))
+    conn.commit()
+    print('Utilisateur supprimer !')
+
+def close_cursor():
+    conn.close()
+    cursor.close()
+    print("Le curseur est fermé")
+
+def open_cursor():
     conn = sq.connect('DecoupeUtilisateurDB.db')
     cursor = conn.cursor()
     cursor.execute("PRAGMA foreign_keys = ON;")
-
-    cursor.execute("DELETE FROM Utilisateur WHERE Pseudo = ?", (user,))
-    conn.commit()
-    conn.close()
-    print('Utilisateur supprimer !')
 
