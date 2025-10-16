@@ -40,3 +40,7 @@ def createDB():
     conn.close()
 
     return
+
+
+def is_user_on_db(pseudo, password):
+    return True  #XXX : fonction temporaire, à remplacer par une vraie vérification dans la BDD
