@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import messagebox, ttk
 
 # Constantes de taille de police
 H1_FONT = ("Arial", 24, "bold")
@@ -120,10 +120,53 @@ class Page2(tk.Frame):
 
 class Page3(tk.Frame):
 	def __init__(self, parent, controller):
-		super().__init__(parent, pady=10)
+		super().__init__(parent, pady=10, width=controller.root.winfo_screenwidth())
 		self.controller = controller
-		label = tk.Label(self, text="Page 3", font=H2_FONT)
-		label.pack(pady=10, padx=10)
+		
+		self.grid_rowconfigure(0, weight=1)
+		self.grid_rowconfigure(3, weight=1)
+		# #--------------------------------------|Découpage en sous-réseaux|--------------------------------------
+		label = tk.Label(self, text="Découpage en sous-réseaux", font=H2_FONT).grid(row=0, column=0, padx=5, pady=5, sticky="e", columnspan=5)
+		
+		
+		# #-----------------------------------------------------------------------------------------------
+		# Adresse réseau
+		tk.Label(self, text="Adresse réseau:", font=P2_FONT).grid(row=1, column=0, padx=5, pady=5, sticky="e")
+		self.ip_entry = tk.Entry(self, font=P2_FONT, width=20)
+		self.ip_entry.grid(row=1, column=1, padx=5, pady=5)
+
+		# Nombre de sous-réseaux
+		tk.Label(self, text="Nombre de sous-réseaux:", font=P2_FONT).grid(row=1, column=2, padx=5, pady=5, sticky="e")
+		self.ip_entry = tk.Entry(self, font=P2_FONT, width=20)
+		self.ip_entry.grid(row=1, column=3, padx=5, pady=5)
+
+		# #-----------------------------------------------------------------------------------------------
+
+		# Masque
+		tk.Label(self, text="Masque:", font=P2_FONT).grid(row=2, column=0, padx=5, pady=5, sticky="e")
+		self.ip_entry = tk.Entry(self, font=P2_FONT, width=20)
+		self.ip_entry.grid(row=2, column=1, padx=5, pady=5)
+
+		# Nombre de machines par sous-réseau
+		tk.Label(self, text="Nombre de machines par sous-réseau:", font=P2_FONT).grid(row=2, column=2, padx=5, pady=5, sticky="e")
+		self.ip_entry = tk.Entry(self, font=P2_FONT, width=20)
+		self.ip_entry.grid(row=2, column=3, padx=5, pady=5)
+
+		tk.Button(self, text="Calucler la découpe", command=print("Button Clicked"), font=P2_FONT).grid(row=2, column=4, columnspan=5, padx=5, pady=5)
+
+		# #-----------------------------------------------------------------------------------------------
+
+		colonnes = ["Adresse de sous-réseau", "Adresse de broadcast", "Première IP", "Dernière IP"]
+		tree = ttk.Treeview(self, columns=colonnes, show='headings')
+		tree.grid(row=3, column=0, columnspan=4, padx=5, pady=5)
+		tree.tag_configure('odd', background='#E8E8E8')
+		tree.tag_configure('even', background='#DFDFDF')
+		
+		for col in colonnes:
+			tree.heading(col, text=col)
+			tree.column(col, anchor='center')
+
+
 
 class PageSelector(tk.Frame):
 	def __init__(self, parent, controller):
@@ -145,7 +188,7 @@ class MainApp:
 		self.controller = controller
 		self.root = controller.root
 		self.root.title("Application Principale")
-		self.root.geometry("1600x900")
+		self.root.geometry(str(self.root.winfo_screenwidth())+"x"+str(self.root.winfo_screenheight()))
 
 		# Frame pour le label de bienvenue
 		header_frame = tk.Frame(self.root)
