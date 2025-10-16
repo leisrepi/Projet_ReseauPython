@@ -25,7 +25,7 @@ class GUIController:
         print("Bouton cliqué depuis le contrôleur !")
 
     def on_login(self, email, password):
-        #TODO RETIRER CE DEBUG !!!!!!
+        #XXX RETIRER CE DEBUG !!!!!!
         print(f"Login avec Email: {email}, Mot de passe: {password}")
         #TODO : verifier si les identifiants sont corrects avant d'ouvrir la fenetre principale
         #TODO : ouvrir la fenetre en lui fournissant l'id de l'utilisateur
