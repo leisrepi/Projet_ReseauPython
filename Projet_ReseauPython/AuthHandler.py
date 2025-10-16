@@ -62,7 +62,7 @@ SESSION_LIFETIME = 10  # durée de vie en secondes (ici 10s pour tester)
 
 
 
-def _verify_sign_process_launch(self):
+def _verify_sign_process_launch():
     """Vérifie que le processus de signature est lancé, sinon le lance."""
     global _parent, _child, _sign_process      
 
@@ -84,7 +84,7 @@ class session:
         self.signature = sign_session(user_name, self.session_expiration_time, self.random_per_session)
 
 # --- Fonctions de signature ---
-def sign_session(self,user_name: str, session_expiration_time: int, random_per_session: str) -> str:
+def sign_session(user_name: str, session_expiration_time: int, random_per_session: str) -> str:
     """
     Crée une signature HMAC-SHA256 sur le payload (user_name|session_expiration_time|random_per_session).
     Args:
