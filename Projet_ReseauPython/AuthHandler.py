@@ -7,12 +7,59 @@ import hashlib
 import hmac  #(Keyed-Hashing for Message Authentication) bibliothèque de hachage avec clé secrète
 import secrets
 import time
+import atexit
+from multiprocessing import Process, Pipe
 
-# --- CONFIG ---
-SECRET_KEY = secrets.token_bytes(32)  # clé secrète de 32 bytes (32 * 8 = 256 bits) => très grand pour être sûr qu'elle ne soit pas trouvée par force brute
-#pour la trouver il faudrait faire 2^256 essais en moyenne, ce qui est infaisable (1,1579208923731619542357098500869e+77 essais) 
-# ou si on calcul a un milliard de milliard de possibilite / s (10^15/s) ~3.7×10⁵⁴ ans (≈ 2.7×10⁴⁴ fois l’âge de l’univers).
+
+# --- sous service (pour sécuriser le stockage de la clé secrète en mémoire) ---
+# --- Processus gardien : possède les secrets et ne les renvoie jamais ---
+_parent = None
+_child = None
+_sign_process = None
+
 SESSION_LIFETIME = 10  # durée de vie en secondes (ici 10s pour tester)
+
+def _signer(connexion):
+    # --- CONFIG ---
+    SECRET_KEY = secrets.token_bytes(32)  # clé secrète de 32 bytes (32 * 8 = 256 bits) => très grand pour être sûr qu'elle ne soit pas trouvée par force brute
+    #pour la trouver il faudrait faire 2^256 essais en moyenne, ce qui est infaisable (1,1579208923731619542357098500869e+77 essais) 
+    # ou si on calcul a un milliard de milliard de possibilite / s (10^15/s) ~3.7×10⁵⁴ ans (≈ 2.7×10⁴⁴ fois l’âge de l’univers).
+    
+    while True:
+        commande, args = connexion.recv()
+        if commande == "sign":
+            user_name, session_expiration_time, random_per_session = args
+            if "|" in user_name:
+                #TODO : crée une exception personnalisée
+                raise ValueError("Le nom d'utilisateur ne doit pas contenir de pipe '|'")
+            
+            message = f"{user_name}|{session_expiration_time}|{random_per_session}".encode() #f pour mettre vairable dans la chaine et pipe | sert juste de separateur,
+                #on a choisis "|" car c'est un caractere peu utilise dans les noms d'utilisateur
+
+            mac = hmac.new(SECRET_KEY, message, hashlib.sha256).digest()  # creer le hachage avec la cle secrete, le message et l'algorithme sha256
+            signature = base64.urlsafe_b64encode(mac).decode() #Base64 → compact (~+33% de taille) et réversible vers les bytes, il convertit les octets en caractères.
+                #urlsafe_b64encode → évite + et /, donc OK pour les URLs/cookies.
+            connexion.send(signature)
+        elif commande == "exit":
+            connexion.send(True)
+            connexion.close()
+            break
+
+def _verify_sign_process_launch():
+    global _parent, _child, _sign_process
+    if _sign_process is None or not _sign_process.is_alive():
+        _parent, _child = Pipe(duplex=True)
+        _sign_process = Process(target=_signer, args=(_child,), daemon=True)
+        _sign_process.start()
+
+def _shutdown():
+    try:
+        _parent.send(("exit",))
+        _parent.recv()
+    except Exception:
+        pass
+
+atexit.register(_shutdown)
 
 class session:
     def __init__(self, user_name: str):
@@ -32,7 +79,11 @@ def sign_session(user_name: str, session_expiration_time: int, random_per_sessio
     Returns:
         str : la signature HMAC-SHA256 encodée en Base64
     """
-    
+    _verify_sign_process_launch()
+    _parent.send(("sign", (user_name, session_expiration_time, random_per_session)))
+    return _parent.recv()
+
+    '''
     if "|" in user_name:
         #TODO : crée une exception personnalisée
         raise ValueError("Le nom d'utilisateur ne doit pas contenir de pipe '|'")
@@ -43,6 +94,7 @@ def sign_session(user_name: str, session_expiration_time: int, random_per_sessio
     mac = hmac.new(SECRET_KEY, message, hashlib.sha256).digest()  # creer le hachage avec la cle secrete, le message et l'algorithme sha256
     return base64.urlsafe_b64encode(mac).decode() #Base64 → compact (~+33% de taille) et réversible vers les bytes, il convertit les octets en caractères.
         #urlsafe_b64encode → évite + et /, donc OK pour les URLs/cookies.
+    '''
 
 def verify_session(session: session) -> bool:
     """
@@ -91,6 +143,7 @@ def password_encrypt(password):
 
     return hashedDepart
 
+#TODO : renommer en is_password_correct
 def password_verification(password, hashed):
     """Vérifie un mot de passe avec son hash bcrypt.
         Args:
