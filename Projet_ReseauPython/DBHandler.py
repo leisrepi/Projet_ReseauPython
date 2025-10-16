@@ -1,42 +1,92 @@
 import sqlite3 as sq
 
 
-
-def createDB():
-
+def create_db():
+    # Connexion DB
     conn = sq.connect('DecoupeUtilisateurDB.db')
     cursor = conn.cursor()
 
-    cursor.execute
-    ('''
-    CREATE TABLE IF NOT EXISTS Utilisateur (
-    Pseudo varchar(40) not null,
-    MotDePasse varchar(60) not null,
-    primary key(Pseudo)
-    )engine=innodb;
+    # Activation clés étrangères
+    cursor.execute("PRAGMA foreign_keys = ON;")
 
-    CREATE TABLE IF NOT EXISTS DecoupeReseau(
-    idDR smallint not null,
-    Pseudo varchar(40) not null,
-    AdresseIP varchar(20) not null,
-    Masque varchar(20) not null,
-    IsClassfull boolean not null default false,
-    primary key(idDR, Pseudo)
-    )engine=innodb;
+    # Création des tables
+    cursor.executescript('''
+    CREATE TABLE IF NOT EXISTS Utilisateur (
+        Pseudo TEXT NOT NULL PRIMARY KEY,
+        MotDePasse TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS DecoupeReseau (
+        idDR TEXT NOT NULL,
+        Pseudo TEXT NOT NULL,
+        AdresseIP TEXT NOT NULL,
+        Masque TEXT NOT NULL,
+        IsClassfull BOOLEAN NOT NULL DEFAULT 0,
+        PRIMARY KEY (idDR, Pseudo),
+        FOREIGN KEY (Pseudo) REFERENCES Utilisateur(Pseudo)
+            ON DELETE CASCADE ON UPDATE CASCADE
+    );
 
     CREATE TABLE IF NOT EXISTS SousReseau (
-    NumSR smallint not null,
-    NbMachine smallint not null default 0,
-    IdDR smallint not null,
-    primary key(NumSR, IdDR)
-    )engine=innodb;
-
-    CONSTRAINT fk_DecoupeReseau_Utilisateur FOREIGN KEY (Pseudo) REFERENCES Utilisateur(Pseudo) ON DELETE CASCADE ON UPDATE CASCADE
-    CONSTRAINT fk_SousReseau_DecoupeReseau FOREIGN KEY (IdDR, Pseudo) REFERENCES DecoupeReseau(idDR, Pseudo) ON DELETE CASCADE ON UPDATE CASCADE
+        NumSR INTEGER NOT NULL,
+        NbMachine INTEGER NOT NULL DEFAULT 0,
+        IdDR TEXT NOT NULL,
+        Pseudo TEXT NOT NULL,
+        PRIMARY KEY (NumSR, IdDR, Pseudo),
+        FOREIGN KEY (IdDR, Pseudo)
+            REFERENCES DecoupeReseau(idDR, Pseudo)
+            ON DELETE CASCADE ON UPDATE CASCADE
+    );
     ''')
 
-    conn.commit() #Sauvegarde la création des données
+    conn.commit()
     cursor.close()
     conn.close()
 
-    return
+    print("DB OK")
+
+def is_user_on_db(pseudo, motdepasse):
+    conn = sq.connect('DecoupeUtilisateurDB.db')
+    cursor = conn.cursor()
+    cursor.execute("PRAGMA foreign_keys = ON;")
+
+    cursor.execute("""
+        SELECT * FROM Utilisateur 
+        WHERE Pseudo = ? AND MotDePasse = ?
+    """, (pseudo, motdepasse))
+
+    user = cursor.fetchone()
+    conn.close()
+
+    return user is not None
+    
+def get_user_subnetting(pseudo, id_subnetting):
+    conn = sq.connect('DecoupeUtilisateurDB.db')
+    cursor = conn.cursor()
+    cursor.execute("PRAGMA foreign_keys = ON;")
+
+    cursor.execute("""
+        SELECT * FROM DecoupeReseau 
+        WHERE Pseudo = ? AND idDR = ?
+    """, (pseudo, id_subnetting))
+
+def insert_user():
+    conn = sq.connect('DecoupeUtilisateurDB.db')
+    cursor = conn.cursor()
+    cursor.execute("PRAGMA foreign_keys = ON;")
+
+    cursor.execute("insert into Utilisateur(pseudo, MotDePasse) values (?, ?)", ('Babar', 'Elephant01'))
+    conn.commit()
+    conn.close()
+    print('Utilisateur crée !')
+
+def delete_user(user):
+    conn = sq.connect('DecoupeUtilisateurDB.db')
+    cursor = conn.cursor()
+    cursor.execute("PRAGMA foreign_keys = ON;")
+
+    cursor.execute("DELETE FROM Utilisateur WHERE Pseudo = ?", (user,))
+    conn.commit()
+    conn.close()
+    print('Utilisateur supprimer !')
+
