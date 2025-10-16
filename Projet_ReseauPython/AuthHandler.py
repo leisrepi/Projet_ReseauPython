@@ -13,9 +13,9 @@ from multiprocessing import Process, Pipe
 
 # --- sous service (pour sécuriser le stockage de la clé secrète en mémoire) ---
 # --- Processus gardien : possède les secrets et ne les renvoie jamais ---
-_parent = None
-_child = None
-_sign_process = None
+_parent = None #parti du pipe dans le processus principal
+_child = None #parti du pipe dans le processus enfant
+_sign_process : Process = None #processus de signature
 
 SESSION_LIFETIME = 10  # durée de vie en secondes (ici 10s pour tester)
 
@@ -46,13 +46,15 @@ def _signer(connexion):
             break
 
 def _verify_sign_process_launch():
+    """Vérifie que le processus de signature est lancé, sinon le lance."""
     global _parent, _child, _sign_process
     if _sign_process is None or not _sign_process.is_alive():
-        _parent, _child = Pipe(duplex=True)
-        _sign_process = Process(target=_signer, args=(_child,), daemon=True)
-        _sign_process.start()
+        _parent, _child = Pipe(duplex=True) #crée un pipe de communication bi-directionnel
+        _sign_process = Process(target=_signer, args=(_child,), daemon=True) #crée un processus enfant qui exécute la fonction _signer avec l'extrémité enfant du pipe
+        _sign_process.start() #démarre le processus enfant
 
 def _shutdown():
+    """Ferme proprement le processus de signature"""
     try:
         _parent.send(("exit",))
         _parent.recv()
