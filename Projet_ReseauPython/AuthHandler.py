@@ -1,5 +1,5 @@
 # --- IMPORTS ---
-from DBHandler import is_user_on_db
+import DBHandler
 import bcrypt
 
 import base64
@@ -203,6 +203,6 @@ class AuthService():
                 return (bool) : Renvoie True si les identifiants sont corrects, False sinon
         """
         #
-        if is_user_on_db(pseudo, password):
+        if DBHandler.is_user_on_db(pseudo, password):
             return AuthService.get_instance().session(pseudo)
         return None
