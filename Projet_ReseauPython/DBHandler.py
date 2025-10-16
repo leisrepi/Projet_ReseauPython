@@ -1,5 +1,5 @@
 import sqlite3 as sq
-
+import AuthHandler
 
 
 def createDB():
@@ -43,4 +43,5 @@ def createDB():
 
 
 def is_user_on_db(pseudo, password):
+    return AuthHandler.AuthService.get_instance().password_verification(password, b'$2b$16$wIu1r0mX4k3l5y6z7A8B9uE0F1G2H3I4J5K6L7M8N9O0P1Q2R3S4T')
     return True  #XXX : fonction temporaire, à remplacer par une vraie vérification dans la BDD
