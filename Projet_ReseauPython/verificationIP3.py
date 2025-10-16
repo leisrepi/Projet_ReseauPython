@@ -1,5 +1,7 @@
 from ipaddress import IPv4Address, IPv4Network
 
+#ceci est ce que j'ai ajouter ;)
+
 #Adresse IP valide ou pas
 def validation_ip(ip_string):
     try:
