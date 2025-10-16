@@ -28,9 +28,10 @@ def create_db():
         NumSR INTEGER NOT NULL,
         NbMachine INTEGER NOT NULL DEFAULT 0,
         IdDR TEXT NOT NULL,
-        PRIMARY KEY (NumSR, IdDR),
-        FOREIGN KEY (IdDR)
-            REFERENCES DecoupeReseau(IdDR)
+        Pseudo TEXT NOT NULL,
+        PRIMARY KEY (NumSR, IdDR, Pseudo),
+        FOREIGN KEY (IdDR, Pseudo)
+            REFERENCES DecoupeReseau(IdDR, Pseudo)
             ON DELETE CASCADE ON UPDATE CASCADE
     );
     ''')
@@ -41,9 +42,9 @@ def create_db():
 def is_user_on_db(pseudo, motdepasse):
     #récuperation du mdp hashé
     cursor.execute(""" SELECT MotDePasse FROM Utilisateur WHERE Pseudo = ? """, (pseudo,))
-    hashedMDP = cursor.fetchone()
+    hashedMDP = cursor.fetchone() #--> renvoie un tuple donc hashedMDP[0] est le Bytes que l'on doit envoyer
     #vérification du mdp et renvoie d'acceptation ou de refus
-    return ath.password_verification(motdepasse, hashedMDP) 
+    return ath.password_verification(motdepasse, hashedMDP[0]) 
     
 def get_user_subnetting(pseudo, id_subnetting):
     #Vérification de l'utilisateur et recherche de sa découpe dans la db
@@ -71,3 +72,7 @@ def open_cursor():
     cursor = conn.cursor()
     cursor.execute("PRAGMA foreign_keys = ON;")
 
+def insert_decoupe():
+    cursor.execute("Insert into DecoupeReseau(IdDR, Pseudo, AdresseIP, Masque) values(?, ?, ?, ?)",("Animaux","Baptiste", "caca","cucu",))
+    conn.commit()
+    print("insertion decoupe OK")

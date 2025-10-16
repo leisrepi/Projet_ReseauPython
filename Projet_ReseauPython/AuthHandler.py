@@ -1,5 +1,5 @@
 import bcrypt
-from DBHandler import is_user_on_db
+import DBHandler
 def password_encrypt(passwd):
     """Chiffre un mot de passe avec bcrypt.
         Args:
@@ -48,6 +48,6 @@ def can_login(pseudo, passwd):
     #TODO : si ajout de session, code supplémentaire possible dans cette fonction
     return is_user_on_db(pseudo, passwd)
 
-print(password_encrypt("1234")) #1234 => b'$2b$16$W.Z8/R3Gu9p6RUWmqMmhSeJSyF2JiHOwpupW4lsCVDKrRJes8XioS'
+#print(password_encrypt("1234")) #1234 => b'$2b$16$W.Z8/R3Gu9p6RUWmqMmhSeJSyF2JiHOwpupW4lsCVDKrRJes8XioS'
 
-print(password_verification("1234", b'$2b$16$W.Z8/R3Gu9p6RUWmqMmhSeJSyF2JiHOwpupW4lsCVDKrRJes8XioS')) #True
+#print(password_verification("1234", b'$2b$16$W.Z8/R3Gu9p6RUWmqMmhSeJSyF2JiHOwpupW4lsCVDKrRJes8XioS')) #True
