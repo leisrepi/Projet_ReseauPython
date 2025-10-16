@@ -14,6 +14,13 @@ SECRET_KEY = secrets.token_bytes(32)  # clé secrète de 32 bytes (32 * 8 = 256 
 # ou si on calcul a un milliard de milliard de possibilite / s (10^15/s) ~3.7×10⁵⁴ ans (≈ 2.7×10⁴⁴ fois l’âge de l’univers).
 SESSION_LIFETIME = 10  # durée de vie en secondes (ici 10s pour tester)
 
+class session:
+    def __init__(self, user_name: str):
+        self.user_name = user_name
+        self.session_expiration_time = int(time.time()) + SESSION_LIFETIME # temps actuel en secondes depuis 1970 + durée de vie (apres ce temps la session n'est plus valide)
+        self.random_per_session = secrets.token_urlsafe(8) # chaîne aléatoire unique par session (8 bytes encodés en base64 urlsafe (pas de + ou /))
+        self.signature = sign_session(user_name, self.session_expiration_time, self.random_per_session)
+
 # --- Fonctions de signature ---
 def sign_session(user_name: str, session_expiration_time: int, random_per_session: str) -> str:
     """
@@ -25,34 +32,19 @@ def sign_session(user_name: str, session_expiration_time: int, random_per_sessio
     Returns:
         str : la signature HMAC-SHA256 encodée en Base64
     """
+    
+    if "|" in user_name:
+        #TODO : crée une exception personnalisée
+        raise ValueError("Le nom d'utilisateur ne doit pas contenir de pipe '|'")
+    
     message = f"{user_name}|{session_expiration_time}|{random_per_session}".encode() #f pour mettre vairable dans la chaine et pipe | sert juste de separateur,
         #on a choisis "|" car c'est un caractere peu utilise dans les noms d'utilisateur
-    #TODO : verifier que le nom d'utilisateur ne contient pas de pipe a son instruction
-    if "|" in user_name:
-        raise ValueError("Le nom d'utilisateur ne doit pas contenir de pipe '|'")
+
     mac = hmac.new(SECRET_KEY, message, hashlib.sha256).digest()  # creer le hachage avec la cle secrete, le message et l'algorithme sha256
     return base64.urlsafe_b64encode(mac).decode() #Base64 → compact (~+33% de taille) et réversible vers les bytes, il convertit les octets en caractères.
         #urlsafe_b64encode → évite + et /, donc OK pour les URLs/cookies.
 
-
-def create_session(user_name: str):
-    """Crée une session pour un utilisateur donné.
-    Args:
-        user_name (str) : nom de l'utilisateur
-    Returns:
-        dict : dictionnaire contenant les informations de la session (user_name, session_expiration_time, random_per_session, signature)
-    """
-    session_expiration_time = int(time.time()) + SESSION_LIFETIME # temps actuel en secondes depuis 1970 + durée de vie (apres ce temps la session n'est plus valide)
-    random_per_session = secrets.token_urlsafe(8) # chaîne aléatoire unique par session (8 bytes encodés en base64 urlsafe (pas de + ou /))
-    signature = sign_session(user_name, session_expiration_time, random_per_session)
-    return {
-        "user_name": user_name,
-        "session_expiration_time": session_expiration_time,
-        "random_per_session": random_per_session,
-        "signature": signature
-    }
-
-def verify_session(token: dict) -> bool:
+def verify_session(session: session) -> bool:
     """
     Vérifie que la session n'est pas expirée et que la signature est valide.
     Args:
@@ -62,17 +54,17 @@ def verify_session(token: dict) -> bool:
     """
     now = int(time.time())
     # Vérifie si la session est expirée
-    if now >= token["session_expiration_time"]:
+    if now >= session.session_expiration_time:
         print("❌ Session expirée")
         return False
 
     # signature attendue
-    expected_sig = sign_session(
-        token["user_name"],
-        token["session_expiration_time"],
-        token["random_per_session"]
+    expected_signature = sign_session(
+        session.user_name,
+        session.session_expiration_time,
+        session.random_per_session,
     )
-    if not hmac.compare_digest(expected_sig, token["signature"]): # compare_digest pour éviter les attaques par timing
+    if not hmac.compare_digest(expected_signature, session.signature): # compare_digest pour éviter les attaques par timing
         #python s'arrête à la première différence, donc on utilise compare_digest pour forcer à comparer toute la chaîne (même temps, donc pas d'info sur la position de la différence)
         print("❌ Signature invalide (token falsifié ?)")
         return False
@@ -81,50 +73,52 @@ def verify_session(token: dict) -> bool:
     return True
 
 
-def password_encrypt(passwd):
+def password_encrypt(password):
     """Chiffre un mot de passe avec bcrypt.
         Args:
-            passwd (string) : chaîne de caractères du mot de passe à chiffrer
+            passwd (string) : mot de passe en blanc à chiffrer
 
         Returns:
             return (bytes) : Renvoie le mot de passe hashé
     """
     #bcrypt a besoins d'encode pour fonctionner
-    passwdDepart = passwd.encode()
+    passwordDepart = password.encode()
 
     #salaison du MDP
     saltDepart = bcrypt.gensalt(rounds=16)
     #hashage du MDP
-    hashedDepart = bcrypt.hashpw(passwdDepart, saltDepart)
+    hashedDepart = bcrypt.hashpw(passwordDepart, saltDepart)
 
     return hashedDepart
 
-def password_verification(passwd, hashed):
+def password_verification(password, hashed):
     """Vérifie un mot de passe avec son hash bcrypt.
         Args:
-            passwd (string) : chaîne de caractères du mot de passe à vérifier
+            passwd (string) : mot de passe en blanc à vérifier
             hashed (bytes) : hash du mot de passe à vérifier
 
         Returns:
             return (bool) : Renvoie True si le mot de passe est correct, False sinon
     """
-    passwdVerif = passwd.encode()
+    passwordVerif = password.encode()
 
     #comparaison des 2 mots de passes
-    if(bcrypt.checkpw(passwdVerif, hashed)):
+    if(bcrypt.checkpw(passwordVerif, hashed)):
         return True
     else:
         return False
 
 # Permet de se connecter à un compte utilisateur
-def can_login(pseudo, passwd):
+def login(pseudo, password):
     """Vérifie les identifiants d'un utilisateur.
         Args:
             pseudo (string) : chaîne de caractères du pseudo de l'utilisateur
-            passwd (bytes) : mot de passe hashé de l'utilisateur
+            password (bytes) : mot de passe en blanc
 
         Returns:
             return (bool) : Renvoie True si les identifiants sont corrects, False sinon
     """
-    #TODO : si ajout de session, code supplémentaire possible dans cette fonction
-    return is_user_on_db(pseudo, passwd)
+    #
+    if is_user_on_db(pseudo, password):
+        return session(pseudo)
+    return None
