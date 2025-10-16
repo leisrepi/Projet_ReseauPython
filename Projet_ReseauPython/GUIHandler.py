@@ -122,8 +122,37 @@ class Page3(tk.Frame):
 	def __init__(self, parent, controller):
 		super().__init__(parent, pady=10)
 		self.controller = controller
-		label = tk.Label(self, text="Page 3", font=H2_FONT)
-		label.pack(pady=10, padx=10)
+		
+		self.grid_rowconfigure(0, weight=1)
+		# #--------------------------------------|Découpage en sous-réseaux|--------------------------------------
+		label = tk.Label(self, text="Découpage en sous-réseaux", font=H2_FONT).grid(row=0, column=0, padx=5, pady=5, sticky="e", columnspan=4)
+		
+		
+		# #-----------------------------------------------------------------------------------------------
+		# Adresse IP
+		tk.Label(self, text="Adresse IP:", font=P2_FONT).grid(row=1, column=0, padx=5, pady=5, sticky="e")
+		self.ip_entry = tk.Entry(self, font=P2_FONT, width=20)
+		self.ip_entry.grid(row=1, column=1, padx=5, pady=5)
+
+		# Nombre de sous-réseaux
+		tk.Label(self, text="Nombre de sous-réseaux:", font=P2_FONT).grid(row=1, column=2, padx=5, pady=5, sticky="e")
+		self.ip_entry = tk.Entry(self, font=P2_FONT, width=20)
+		self.ip_entry.grid(row=1, column=3, padx=5, pady=5)
+
+		# #-----------------------------------------------------------------------------------------------
+
+		# Masque
+		tk.Label(self, text="Masque:", font=P2_FONT).grid(row=2, column=0, padx=5, pady=5, sticky="e")
+		self.ip_entry = tk.Entry(self, font=P2_FONT, width=20)
+		self.ip_entry.grid(row=2, column=1, padx=5, pady=5)
+
+		# Nombre de machines par sous-réseau
+		tk.Label(self, text="Nombre de machines par sous-réseau:", font=P2_FONT).grid(row=2, column=2, padx=5, pady=5, sticky="e")
+		self.ip_entry = tk.Entry(self, font=P2_FONT, width=20)
+		self.ip_entry.grid(row=2, column=3, padx=5, pady=5)
+
+
+
 
 class PageSelector(tk.Frame):
 	def __init__(self, parent, controller):
