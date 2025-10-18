@@ -1,6 +1,5 @@
 import tkinter as tk
 from tkinter import messagebox, ttk
-
 # Constantes de taille de police
 H1_FONT = ("Arial", 24, "bold")
 H2_FONT = ("Arial", 20, "bold")
@@ -120,53 +119,76 @@ class Page2(tk.Frame):
 
 class Page3(tk.Frame):
 	def __init__(self, parent, controller):
+
+		#TODO : ajouter une vérification pour ne pas ajouter du texte
+		#TODO : renommer get_text
+		def add_to_combobox():
+			current_values = list(self.nb_machines_combobox['values'])
+			if(self.nb_machines_combobox.get() == ""):
+				self.nb_machines_combobox['values'] = current_values + [self.nb_machines_per_subnet.get()]
+			else:
+				print("Il est écrit : ", self.nb_machines_combobox.get())
+			self.nb_machines_per_subnet.delete(0, tk.END)
+
+		def remove_of_combobox():
+			# current est l'index de l'élément sélectionné
+			# le premier élément est une chaîne vide lorsqu'aucun élément n'est sélectionné
+			if self.nb_machines_combobox.current() == 0:
+				return
+			
+			combobox_list = list(self.nb_machines_combobox['values'])
+			combobox_list.pop(self.nb_machines_combobox.current())
+			self.nb_machines_combobox['values'] = combobox_list
+			print("Valeur supprimée : ", self.nb_machines_combobox.get())
+			print("Index supprimé : ", self.nb_machines_combobox.current())
+			self.nb_machines_combobox.set("")
+				
 		super().__init__(parent, pady=10, width=controller.root.winfo_screenwidth())
 		self.controller = controller
-		
-		self.grid_rowconfigure(0, weight=1)
-		self.grid_rowconfigure(3, weight=1)
 		# #--------------------------------------|Découpage en sous-réseaux|--------------------------------------
-		label = tk.Label(self, text="Découpage en sous-réseaux", font=H2_FONT).grid(row=0, column=0, padx=5, pady=5, sticky="e", columnspan=5)
+		label = tk.Label(self, text="Découpe en sous-réseaux", font=H2_FONT).grid(row=0, column=0, padx=5, pady=5, sticky="e", columnspan=5)
 		
 		
 		# #-----------------------------------------------------------------------------------------------
 		# Adresse réseau
 		tk.Label(self, text="Adresse réseau:", font=P2_FONT).grid(row=1, column=0, padx=5, pady=5, sticky="e")
-		self.ip_entry = tk.Entry(self, font=P2_FONT, width=20)
-		self.ip_entry.grid(row=1, column=1, padx=5, pady=5)
+		self.network_entry = tk.Entry(self, font=P2_FONT, width=20)
+		self.network_entry.grid(row=1, column=1, padx=5, pady=5)
 
-		# Nombre de sous-réseaux
-		tk.Label(self, text="Nombre de sous-réseaux:", font=P2_FONT).grid(row=1, column=2, padx=5, pady=5, sticky="e")
-		self.ip_entry = tk.Entry(self, font=P2_FONT, width=20)
-		self.ip_entry.grid(row=1, column=3, padx=5, pady=5)
+		nb_machines_tab = [""]
+		# Nombre de machines par sous-réseau
+		tk.Label(self, text="Nombre de machines par sous-réseau:", font=P2_FONT).grid(row=1, column=2, padx=5, pady=5, sticky="e")
+		self.nb_machines_per_subnet = tk.Entry(self, font=P2_FONT, width=5, )
+		self.nb_machines_per_subnet.grid(row=1, column=3, padx=5, pady=5, sticky="w")
+		tk.Button(self, text="ajouter", command= add_to_combobox, borderwidth=1, relief="solid").grid(row=1, column=4, padx=5, pady=5, sticky="w")
+		self.nb_machines_combobox = ttk.Combobox(self, values=nb_machines_tab, font=P2_FONT, width=5)
+		self.nb_machines_combobox.grid(row=1, column=5, padx=5, pady=5, sticky="w")
+		tk.Button(self, text="supprimer", command=remove_of_combobox, borderwidth=1, relief="solid").grid(row=1, column=6, padx=5, pady=5, sticky="w")
 
 		# #-----------------------------------------------------------------------------------------------
 
 		# Masque
 		tk.Label(self, text="Masque:", font=P2_FONT).grid(row=2, column=0, padx=5, pady=5, sticky="e")
-		self.ip_entry = tk.Entry(self, font=P2_FONT, width=20)
-		self.ip_entry.grid(row=2, column=1, padx=5, pady=5)
+		self.mask_entry = tk.Entry(self, font=P2_FONT, width=20)
+		self.mask_entry.grid(row=2, column=1, padx=5, pady=5)
 
-		# Nombre de machines par sous-réseau
-		tk.Label(self, text="Nombre de machines par sous-réseau:", font=P2_FONT).grid(row=2, column=2, padx=5, pady=5, sticky="e")
-		self.ip_entry = tk.Entry(self, font=P2_FONT, width=20)
-		self.ip_entry.grid(row=2, column=3, padx=5, pady=5)
+		# Nombre de sous-réseaux
+		tk.Label(self, text="Nombre de sous-réseaux:", font=P2_FONT).grid(row=2, column=2, padx=5, pady=5, sticky="e")
+		self.nb_subnet = tk.Entry(self, font=P2_FONT, width=5)
+		self.nb_subnet.grid(row=2, column=3, padx=5, pady=5, sticky="w")
 
-		tk.Button(self, text="Calucler la découpe", command=print("Button Clicked"), font=P2_FONT).grid(row=2, column=4, columnspan=5, padx=5, pady=5)
+		tk.Button(self, text="Calucler la découpe", command=print("Button Clicked"), font=P2_FONT, borderwidth=1, relief="solid").grid(row=2, column=4, columnspan=3, padx=5, pady=5)
 
 		# #-----------------------------------------------------------------------------------------------
 
+		# Tableau des sous-réseaux
 		colonnes = ["Adresse de sous-réseau", "Adresse de broadcast", "Première IP", "Dernière IP"]
 		tree = ttk.Treeview(self, columns=colonnes, show='headings')
 		tree.grid(row=3, column=0, columnspan=4, padx=5, pady=5)
-		tree.tag_configure('odd', background='#E8E8E8')
-		tree.tag_configure('even', background='#DFDFDF')
-		
+
 		for col in colonnes:
 			tree.heading(col, text=col)
 			tree.column(col, anchor='center')
-
-
 
 class PageSelector(tk.Frame):
 	def __init__(self, parent, controller):
