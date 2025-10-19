@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import messagebox, ttk
-
+from SubnetHandler import calculate_subnetting
+from NetworkHandler import create_network
 # Constantes de taille de police
 H1_FONT = ("Arial", 24, "bold")
 H2_FONT = ("Arial", 20, "bold")
@@ -149,21 +150,15 @@ class Page3(tk.Frame):
 			print("Index supprimé : ", self.nb_machines_combobox.current())
 			self.nb_machines_combobox.set("")
 
-		#TODO : remplacer result par l'appel à la fonction de découpage en sous-réseaux
 		#TODO : vérifier les entrées utilisateur avant de lancer le calcul (si elles ne sont pas vides et sont valides)
+		#TODO : déplacer la méthode dans GUIController
 		def show_subnetting_result():
-			result = [['192.168.5.0', '192.168.5.15', '192.168.5.1', '192.168.5.14'],
-				['192.168.5.16', '192.168.5.31', '192.168.5.17', '192.168.5.30'], 
-				['192.168.5.32', '192.168.5.47', '192.168.5.33', '192.168.5.46'], 
-				['192.168.5.48', '192.168.5.63', '192.168.5.49', '192.168.5.62'], 
-				['192.168.5.64', '192.168.5.79', '192.168.5.65', '192.168.5.78'], 
-				['192.168.5.80', '192.168.5.95', '192.168.5.81', '192.168.5.94'], 
-				['192.168.5.96', '192.168.5.111', '192.168.5.97', '192.168.5.110'], 
-				['192.168.5.112', '192.168.5.127', '192.168.5.113', '192.168.5.126'], 
-				['192.168.5.128', '192.168.5.143', '192.168.5.129', '192.168.5.142'], 
-				['192.168.5.144', '192.168.5.159', '192.168.5.145', '192.168.5.158'], 
-				['192.168.5.160', '192.168.5.175', '192.168.5.161', '192.168.5.174'], 
-				['192.168.5.176', '192.168.5.191', '192.168.5.177', '192.168.5.190']]
+			network = create_network(self.network_entry.get(), self.mask_entry.get())
+			combobox_list = list(self.nb_machines_combobox["values"])
+
+			# On ignore le premier élément qui est une chaîne vide
+			list_nb_machines = list(map(int, combobox_list[1:]))
+			result = calculate_subnetting(network, list_nb_machines)
 			i = 0
 			for ligne in result:
 				if(i % 2 == 0):
@@ -199,10 +194,10 @@ class Page3(tk.Frame):
 		self.mask_entry = tk.Entry(self, font=P2_FONT, width=20)
 		self.mask_entry.grid(row=2, column=1, padx=5, pady=5)
 
-		# Nombre de sous-réseaux
-		tk.Label(self, text="Nombre de sous-réseaux:", font=P2_FONT).grid(row=2, column=2, padx=5, pady=5, sticky="e")
-		self.nb_subnet = tk.Entry(self, font=P2_FONT, width=5)
-		self.nb_subnet.grid(row=2, column=3, padx=5, pady=5, sticky="w")
+		# # Nombre de sous-réseaux
+		# tk.Label(self, text="Nombre de sous-réseaux:", font=P2_FONT).grid(row=2, column=2, padx=5, pady=5, sticky="e")
+		# self.nb_subnet = tk.Entry(self, font=P2_FONT, width=5)
+		# self.nb_subnet.grid(row=2, column=3, padx=5, pady=5, sticky="w")
 
 		tk.Button(self, text="Calucler la découpe", command=show_subnetting_result, font=P2_FONT, borderwidth=1, relief="solid").grid(row=2, column=4, columnspan=3, padx=5, pady=5)
 
