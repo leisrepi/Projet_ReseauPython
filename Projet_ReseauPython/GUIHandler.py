@@ -16,9 +16,9 @@ class LoginMenu:
 		self.root.title("Connexion")
 		self.root.geometry("400x250")
 
-		tk.Label(self.root, text="Email:", font=H3_FONT).pack(pady=(20, 0))
-		self.email_entry = tk.Entry(self.root, font=P_FONT, width=30)
-		self.email_entry.pack(pady=5)
+		tk.Label(self.root, text="Pseudonyme:", font=H3_FONT).pack(pady=(20, 0))
+		self.pseudonyme_entry = tk.Entry(self.root, font=P_FONT, width=30)
+		self.pseudonyme_entry.pack(pady=5)
 
 		tk.Label(self.root, text="Mot de passe:", font=H3_FONT).pack(pady=(10, 0))
 		self.password_entry = tk.Entry(self.root, show="*", font=P_FONT, width=30)
@@ -28,9 +28,9 @@ class LoginMenu:
 
 
 	def on_login(self):
-		email = self.email_entry.get()
+		pseudonyme = self.pseudonyme_entry.get()
 		password = self.password_entry.get()
-		self.controller.on_login(email, password)
+		self.controller.on_login(pseudonyme, password)
 
 
 
@@ -235,6 +235,8 @@ class MainApp:
 		self.pageSelector = PageSelector(self.root, self)
 		self.pageSelector.grid(row=2, column=0, sticky="ns")
 		self.show_page("Page1")
+		self.test_button = tk.Button(self.root, text="Test Bouton", font=P2_FONT, command=self.on_button_click)
+		self.test_button.grid(row=1, column=1, padx=10, pady=10, sticky="ne")
 
 	def on_button_click(self):
 		self.controller.on_button_click()

@@ -1,6 +1,7 @@
 import tkinter as tk
 import GUIHandler
-
+import AuthHandler
+import DBHandler  
 
 
 class GUIController:
@@ -17,25 +18,49 @@ class GUIController:
 
     def __init__(self):
         self.root = tk.Tk()
+        self.root.protocol("WM_DELETE_WINDOW", self.on_close)
         self.root.title("NO_NAME_SET")
         self.view = GUIHandler.LoginMenu(self)
+        self.session = None
         self.run()
+
 
     def on_button_click(self):
         print("Bouton cliqué depuis le contrôleur !")
+        if (AuthHandler.verify_session(self.session)):
+            print("Session valide.")
+        else:
+            print("Session expirée, veuillez vous reconnecter.")
+            self.disconnect()
 
-    def on_login(self, email, password):
+    def on_login(self, pseudonyme, password):
         #XXX RETIRER CE DEBUG !!!!!!
-        print(f"Login avec Email: {email}, Mot de passe: {password}")
+        print(f"Login avec Email: {pseudonyme}, Mot de passe: {password}")
+
         #TODO : verifier si les identifiants sont corrects avant d'ouvrir la fenetre principale
-        #TODO : ouvrir la fenetre en lui fournissant l'id de l'utilisateur
+        if AuthHandler.login(pseudonyme, password):
+            print("Login réussi !")
+            self.session = AuthHandler.session(pseudonyme)
+            self.clean_view()
+            self.view = GUIHandler.MainApp(self)
+        else:
+            print("Échec du login !")
+            tk.messagebox.showerror("Erreur de connexion", "Email ou mot de passe incorrect.")
+            return
+
+    def disconnect(self):
         self.clean_view()
-        self.view = GUIHandler.MainApp(self)
+        self.view = GUIHandler.LoginMenu(self)
        
-    
+    def on_close(self):
+        print("Fermeture de l'application...")
+        self.root.destroy()
+        AuthHandler._shutdown()
+
     def clean_view(self):
         self.root.destroy()
         self.root = tk.Tk()
+        self.root.protocol("WM_DELETE_WINDOW", self.on_close)
         self.root.title("NO_NAME_SET")
 
     def run(self):

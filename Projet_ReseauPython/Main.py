@@ -13,7 +13,7 @@ if (__name__ == "__main__"):
     print ("j'ai refussioner avec la branche main")
 
     #GUIHandlerOld.init_GUI()
-
+    
 
     guiController = GUIController.GUIController.get_instance()
 
