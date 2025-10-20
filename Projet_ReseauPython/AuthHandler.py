@@ -1,5 +1,6 @@
 # --- IMPORTS ---
 import DBHandler
+import DBHandler
 import bcrypt
 
 import base64
@@ -255,7 +256,7 @@ def password_encrypt(password):
     #hashage du MDP
     hashedDepart = bcrypt.hashpw(passwordDepart, saltDepart)
 
-    return hashedDepart
+        return hashedDepart
 
 #TODO : renommer en is_password_correct
 def password_verification(password, hashed):

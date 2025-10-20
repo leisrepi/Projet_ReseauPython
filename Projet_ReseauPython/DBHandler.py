@@ -1,5 +1,6 @@
 import sqlite3 as sq
 import AuthHandler
+import AuthHandler
 
 
 def createDB():
