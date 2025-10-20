@@ -44,8 +44,11 @@ def _create_session(connexion):
         """
         
         if "|" in user_name:
-            #TODO : crée une exception personnalisée
-            raise ValueError("Le nom d'utilisateur ne doit pas contenir de pipe '|'")
+            #raise ValueError("Le nom d'utilisateur ne doit pas contenir de pipe '|'")
+            return None
+        if user_name is None:
+            #raise ValueError("le nom d'utilisateur ne peut pas être vide!")
+            return None
         
         message = f"{user_name}|{session_expiration_time}|{random_per_session}".encode() #f pour mettre vairable dans la chaine et pipe | sert juste de separateur,
             #on a choisis "|" car c'est un caractere peu utilise dans les noms d'utilisateur
@@ -56,6 +59,8 @@ def _create_session(connexion):
         
     def _verify_session(old_session : session) -> bool:
         #TODO faire la documentation
+        if old_session is None:
+            return False #la session ne peut pas être vide
         now = int(time.time())
         if now >= old_session.session_expiration_time:
             print("❌ Session expirée")
@@ -84,7 +89,9 @@ def _create_session(connexion):
                     user_name = old_session.user_name
                 if "|" in user_name:
                     #TODO : crée une exception personnalisée
-                    raise ValueError("Le nom d'utilisateur ne doit pas contenir de pipe '|'")
+                    #raise ValueError("Le nom d'utilisateur ne doit pas contenir de pipe '|'")
+                    connexion.send(None)
+                    continue
                 
                 if password is not None:
                     #vérification du mot de passe

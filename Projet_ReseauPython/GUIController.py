@@ -2,6 +2,7 @@ import tkinter as tk
 import GUIHandler
 import AuthHandler
 import DBHandler  
+import time
 
 
 class GUIController:
@@ -26,6 +27,7 @@ class GUIController:
 
 
     def on_button_click(self):
+        print(self)
         print("Bouton cliqué depuis le contrôleur !")
         if (AuthHandler.verify_session(self.session)):
             print("Session valide.")
@@ -37,12 +39,16 @@ class GUIController:
         #XXX RETIRER CE DEBUG !!!!!!
         print(f"Login avec Email: {pseudonyme}, Mot de passe: {password}")
 
-        #TODO : verifier si les identifiants sont corrects avant d'ouvrir la fenetre principale
-        if AuthHandler.login(pseudonyme, password):
+        #XXX : verifier si les identifiants sont corrects avant d'ouvrir la fenetre principale
+        print(self)
+        self.session = AuthHandler.create_session(pseudonyme, password=password)
+        print(self.session)
+        if self.session != None and AuthHandler.verify_session(self.session):
             print("Login réussi !")
-            self.session = AuthHandler.session(pseudonyme)
             self.clean_view()
             self.view = GUIHandler.MainApp(self)
+            self.root.bind_all("<Key>", self.refresh_key)
+            self.root.bind_all("<Motion>", self.refresh_key)
         else:
             print("Échec du login !")
             tk.messagebox.showerror("Erreur de connexion", "Email ou mot de passe incorrect.")
@@ -69,6 +75,11 @@ class GUIController:
     def show_page(self, page_name):
         self.view.show_page(page_name)
 
+    def refresh_key(self, c):
+        time_left = self.session.session_expiration_time - time.time()
+        if time_left <= 5:
+            self.session = AuthHandler.refresh_session(self.session)
+            print("refreshed")
 
 '''
 if __name__ == "__main__":
