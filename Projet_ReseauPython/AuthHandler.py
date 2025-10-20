@@ -255,8 +255,7 @@ def password_encrypt(password):
     saltDepart = bcrypt.gensalt(rounds=16)
     #hashage du MDP
     hashedDepart = bcrypt.hashpw(passwordDepart, saltDepart)
-
-        return hashedDepart
+    return hashedDepart
 
 #TODO : renommer en is_password_correct
 def password_verification(password, hashed):
