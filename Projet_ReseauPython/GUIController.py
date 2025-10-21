@@ -58,7 +58,9 @@ class GUIController:
             return
         
         combobox_list = list(page3.nb_machines_combobox["values"])
-
+        if(len(combobox_list) < 3): # 3 car le premier élément est une chaîne vide
+            tk.messagebox.showerror("Erreur", "Veuillez ajouter au moins 2 nombre de machines.")
+            return
         # On ignore le premier élément qui est une chaîne vide
         list_nb_machines = list(map(int, combobox_list[1:]))
         return calculate_subnetting(network, list_nb_machines)

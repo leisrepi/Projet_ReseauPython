@@ -132,6 +132,7 @@ class Page3(tk.Frame):
 			else:
 				print("Il est écrit : ", self.nb_machines_combobox.get())
 			self.nb_machines_per_subnet.delete(0, tk.END)
+			self.step_entry.config(state="readonly")
 
 	def remove_of_combobox(self):
 		# current est l'index de l'élément sélectionné
@@ -162,7 +163,8 @@ class Page3(tk.Frame):
 			else:
 				self.tree.insert('', 'end', values=ligne)
 			i += 1
-
+		self.step.config(text="Ceci est un texte de test")
+		
 			
 	def __init__(self, parent, controller):
 		super().__init__(parent, pady=10, width=controller.root.winfo_screenwidth())
@@ -180,13 +182,15 @@ class Page3(tk.Frame):
 
 		nb_machines_tab = [""]
 		# Nombre de machines par sous-réseau
-		tk.Label(self, text="Nombre de machines par sous-réseau:", font=P2_FONT).grid(row=1, column=2, padx=5, pady=5, sticky="e")
-		self.nb_machines_per_subnet = tk.Entry(self, font=P2_FONT, width=5, )
-		self.nb_machines_per_subnet.grid(row=1, column=3, padx=5, pady=5, sticky="w")
-		tk.Button(self, text="ajouter", command=self.add_to_combobox, borderwidth=1, relief="solid").grid(row=1, column=4, padx=5, pady=5, sticky="w")
+		tk.Label(self, text="Nombre de machines par sous-réseau:", font=P2_FONT).grid(row=1, column=2, padx=5, pady=5, columnspan=2, sticky="e")
+		self.nb_machines_per_subnet = tk.Entry(self, font=P2_FONT, width=5)
+		self.nb_machines_per_subnet.grid(row=1, column=4, padx=5, pady=5, sticky="w")
+
+		tk.Button(self, text="ajouter", command=self.add_to_combobox, borderwidth=1, relief="solid").grid(row=1, column=5, padx=5, pady=5, sticky="w")
+
 		self.nb_machines_combobox = ttk.Combobox(self, values=nb_machines_tab, font=P2_FONT, width=5, state="readonly")
-		self.nb_machines_combobox.grid(row=1, column=5, padx=5, pady=5, sticky="w")
-		tk.Button(self, text="supprimer", command=self.remove_of_combobox, borderwidth=1, relief="solid").grid(row=1, column=6, padx=5, pady=5, sticky="w")
+		self.nb_machines_combobox.grid(row=1, column=6, padx=5, pady=5, sticky="w")
+		tk.Button(self, text="supprimer", command=self.remove_of_combobox, borderwidth=1, relief="solid").grid(row=1, column=7, padx=5, pady=5, sticky="w")
 
 		# #-----------------------------------------------------------------------------------------------
 
@@ -204,11 +208,22 @@ class Page3(tk.Frame):
 
 		# #-----------------------------------------------------------------------------------------------
 
+		# Nombre de machines total du réseau
+		tk.Label(self, text="Nombre de machines total du réseau:", font=P2_FONT).grid(row=3, column=0, padx=5, pady=5, sticky="e")
+		self.total_nb_machines = tk.Label(self, font=P2_FONT, width=20)
+		self.total_nb_machines.grid(row=3, column=1, padx=5, pady=5)
+
+		# Pas
+		tk.Label(self, text="Pas:", font=P2_FONT).grid(row=3, column=2, padx=5, pady=5, sticky="e")
+		self.step = tk.Label(self, font=P2_FONT, width=20)
+		self.step.grid(row=3, column=3, padx=5, pady=5)
+
+		# #-----------------------------------------------------------------------------------------------
+
 		# Tableau des sous-réseaux
-		
 		colonnes = ["N°","Adresse de sous-réseau", "Adresse de broadcast", "Première IP", "Dernière IP"]
 		self.tree = ttk.Treeview(self, columns=colonnes, show='headings')
-		self.tree.grid(row=3, column=0, columnspan=4, padx=5, pady=5)
+		self.tree.grid(row=4, column=0, columnspan=4, padx=5, pady=5)
 
 		self.tree.tag_configure("evenrow", background="lightblue")
 
