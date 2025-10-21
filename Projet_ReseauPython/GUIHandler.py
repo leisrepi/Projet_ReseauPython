@@ -1,7 +1,5 @@
 import tkinter as tk
 from tkinter import messagebox, ttk
-from SubnetHandler import calculate_subnetting
-from NetworkHandler import create_network
 # Constantes de taille de police
 H1_FONT = ("Arial", 24, "bold")
 H2_FONT = ("Arial", 20, "bold")
@@ -120,10 +118,7 @@ class Page2(tk.Frame):
 		label.pack(pady=10, padx=10)
 
 class Page3(tk.Frame):
-	def __init__(self, parent, controller):
-		super().__init__(parent, pady=10, width=controller.root.winfo_screenwidth())
-		self.controller = controller
-		def add_to_combobox():
+	def add_to_combobox(self):
 			if(self.nb_machines_per_subnet.get() == ""):
 				messagebox.showwarning("Attention", "Veuillez entrer un nombre de machines avant d'ajouter.")
 				return
@@ -138,34 +133,40 @@ class Page3(tk.Frame):
 				print("Il est écrit : ", self.nb_machines_combobox.get())
 			self.nb_machines_per_subnet.delete(0, tk.END)
 
-		def remove_of_combobox():
-			# current est l'index de l'élément sélectionné
-			# le premier élément est une chaîne vide lorsqu'aucun élément n'est sélectionné
-			if self.nb_machines_combobox.current() == 0:
-				return
-			combobox_list = list(self.nb_machines_combobox['values'])
-			combobox_list.pop(self.nb_machines_combobox.current())
-			self.nb_machines_combobox['values'] = combobox_list
-			print("Valeur supprimée : ", self.nb_machines_combobox.get())
-			print("Index supprimé : ", self.nb_machines_combobox.current())
-			self.nb_machines_combobox.set("")
+	def remove_of_combobox(self):
+		# current est l'index de l'élément sélectionné
+		# le premier élément est une chaîne vide lorsqu'aucun élément n'est sélectionné
+		if self.nb_machines_combobox.current() == 0:
+			return
+		combobox_list = list(self.nb_machines_combobox['values'])
+		combobox_list.pop(self.nb_machines_combobox.current())
+		self.nb_machines_combobox['values'] = combobox_list
+		print("Valeur supprimée : ", self.nb_machines_combobox.get())
+		print("Index supprimé : ", self.nb_machines_combobox.current())
+		self.nb_machines_combobox.set("")
 
-		#TODO : vérifier les entrées utilisateur avant de lancer le calcul (si elles ne sont pas vides et sont valides)
-		#TODO : déplacer la méthode dans GUIController
-		def show_subnetting_result():
-			network = create_network(self.network_entry.get(), self.mask_entry.get())
-			combobox_list = list(self.nb_machines_combobox["values"])
+	def show_subnetting_result(self):
 
-			# On ignore le premier élément qui est une chaîne vide
-			list_nb_machines = list(map(int, combobox_list[1:]))
-			result = calculate_subnetting(network, list_nb_machines)
-			i = 0
-			for ligne in result:
-				if(i % 2 == 0):
-					tree.insert('', 'end', values=ligne, tags=("evenrow",))
-				else:
-					tree.insert('', 'end', values=ligne)
-				i += 1
+		# On vide le tableau avant d'afficher les nouveaux résultats
+		self.tree.delete(*self.tree.get_children())
+		
+		# On récupère le résultat du contrôleur
+		result = self.controller.controller_subnetting_calculation(self)
+	
+		# On remplit le tableau avec le résultat
+		i = 0
+		for ligne in result:
+			ligne.insert(0, str(i+1))  # Ajout du numéro de sous-réseau au début de la ligne
+			if(i % 2 == 0):
+				self.tree.insert('', 'end', values=ligne, tags=("evenrow",))
+			else:
+				self.tree.insert('', 'end', values=ligne)
+			i += 1
+
+			
+	def __init__(self, parent, controller):
+		super().__init__(parent, pady=10, width=controller.root.winfo_screenwidth())
+		self.controller = controller
 
 		# #--------------------------------------|Découpage en sous-réseaux|--------------------------------------
 		label = tk.Label(self, text="Découpe en sous-réseaux", font=H2_FONT).grid(row=0, column=0, padx=5, pady=5, sticky="e", columnspan=5)
@@ -182,10 +183,10 @@ class Page3(tk.Frame):
 		tk.Label(self, text="Nombre de machines par sous-réseau:", font=P2_FONT).grid(row=1, column=2, padx=5, pady=5, sticky="e")
 		self.nb_machines_per_subnet = tk.Entry(self, font=P2_FONT, width=5, )
 		self.nb_machines_per_subnet.grid(row=1, column=3, padx=5, pady=5, sticky="w")
-		tk.Button(self, text="ajouter", command= add_to_combobox, borderwidth=1, relief="solid").grid(row=1, column=4, padx=5, pady=5, sticky="w")
+		tk.Button(self, text="ajouter", command=self.add_to_combobox, borderwidth=1, relief="solid").grid(row=1, column=4, padx=5, pady=5, sticky="w")
 		self.nb_machines_combobox = ttk.Combobox(self, values=nb_machines_tab, font=P2_FONT, width=5, state="readonly")
 		self.nb_machines_combobox.grid(row=1, column=5, padx=5, pady=5, sticky="w")
-		tk.Button(self, text="supprimer", command=remove_of_combobox, borderwidth=1, relief="solid").grid(row=1, column=6, padx=5, pady=5, sticky="w")
+		tk.Button(self, text="supprimer", command=self.remove_of_combobox, borderwidth=1, relief="solid").grid(row=1, column=6, padx=5, pady=5, sticky="w")
 
 		# #-----------------------------------------------------------------------------------------------
 
@@ -199,21 +200,25 @@ class Page3(tk.Frame):
 		# self.nb_subnet = tk.Entry(self, font=P2_FONT, width=5)
 		# self.nb_subnet.grid(row=2, column=3, padx=5, pady=5, sticky="w")
 
-		tk.Button(self, text="Calucler la découpe", command=show_subnetting_result, font=P2_FONT, borderwidth=1, relief="solid").grid(row=2, column=4, columnspan=3, padx=5, pady=5)
+		tk.Button(self, text="Calculer la découpe", command=self.show_subnetting_result, font=P2_FONT, borderwidth=1, relief="solid").grid(row=2, column=4, columnspan=3, padx=5, pady=5)
 
 		# #-----------------------------------------------------------------------------------------------
 
 		# Tableau des sous-réseaux
 		
-		colonnes = ["Adresse de sous-réseau", "Adresse de broadcast", "Première IP", "Dernière IP"]
-		tree = ttk.Treeview(self, columns=colonnes, show='headings')
-		tree.grid(row=3, column=0, columnspan=4, padx=5, pady=5)
+		colonnes = ["N°","Adresse de sous-réseau", "Adresse de broadcast", "Première IP", "Dernière IP"]
+		self.tree = ttk.Treeview(self, columns=colonnes, show='headings')
+		self.tree.grid(row=3, column=0, columnspan=4, padx=5, pady=5)
 
-		tree.tag_configure("evenrow", background="lightblue")
+		self.tree.tag_configure("evenrow", background="lightblue")
 
+		self.tree.heading("N°", text="N°", anchor='center')
+		self.tree.column("N°", width=50, anchor='center')
 		for col in colonnes:
-			tree.heading(col, text=col)
-			tree.column(col, anchor='center')
+			if col == "N°":
+				continue
+			self.tree.heading(col, text=col)
+			self.tree.column(col, anchor='center')
 
 
 
@@ -254,7 +259,7 @@ class MainApp:
 		self.pages = {}
 		for PageClass in (Page1, Page2, Page3):
 			page_name = PageClass.__name__
-			frame = PageClass(container, self)
+			frame = PageClass(container, self.controller)
 			self.pages[page_name] = frame
 			# Toutes les pages occupent la même cellule
 			frame.grid(row=0, column=0, sticky="nsew")

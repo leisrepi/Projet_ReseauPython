@@ -93,6 +93,9 @@ def calculate_subnetting(network, nb_machines_list):
         Raises:
             Lève une exception TooManyMachinesException si le nombre de sous-réseaux dépasse 100
     """
+    if(not verify_subnetting_possibility(network, nb_machines_list)):
+        raise ValueError("Découpe classique impossible avec les paramètres fournis.")
+        
     nb_machines = calculate_nb_machines_max(nb_machines_list)
     nb_subnet = len(nb_machines_list)
 

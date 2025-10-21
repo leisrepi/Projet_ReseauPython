@@ -22,6 +22,8 @@ def is_mask_valid(mask):
     Raises:
         InvalidMaskException : Si le masque est invalide
     """
+    if (mask == "" or mask is None):
+        return False
     if(mask[0] != "/"):
         mask = "/" + mask
     if(mask[1] == "0"):
@@ -47,14 +49,14 @@ def create_network(address, mask):
             NetmaskValueError : si le masque n'est pas valide
             AddressValueError : si l'adresse IP n'est pas valide
     """ 
-    if(mask[0] != "/"):
-        mask = "/" + mask
+    if(not is_mask_valid(mask)):
+        raise NetmaskValueError("Masque non valide ou vide")
     try:   
         return IPv4Network((address + mask), strict=False)
-    except NetmaskValueError:
-        raise NetmaskValueError("Masque non valide")
     except AddressValueError:
         raise AddressValueError("Adresse IP non valide")
+    except NetmaskValueError:
+        raise NetmaskValueError("Masque non valide")
 
 # Définition du masque en fonction de la classe d'adresse IP classfull (renvoie None si l'adresse ne peut pas avoir de masque)
 def define_mask_by_ip_class(ip_address):
