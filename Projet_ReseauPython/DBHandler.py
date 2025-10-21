@@ -53,7 +53,7 @@ def get_user_subnetting(pseudo, id_subnetting):
     cursor.execute(""" SELECT * FROM DecoupeReseau WHERE Pseudo = ? AND IdDR = ? """, (pseudo, id_subnetting))
     return cursor.fetchall()
 
-def get_user_secified_subnet(pseudo, id_subnetting, numSR):
+def get_user_specified_subnet(pseudo, id_subnetting, numSR):
     cursor.execute(""" SELECT * FROM SousReseau WHERE Pseudo = ? AND IdDR = ? AND NumSR = ?""", (pseudo, id_subnetting, numSR))
     return cursor.fetchall()
 
@@ -70,7 +70,6 @@ def insert_decoupe():
 
 def insert_sous_reseau():
     cursor.execute("Insert into SousReseau(NumSR, NbMachine, IdDR, Pseudo) values(?, ?, ?, ?)",("1","4","Animaux","Baptiste",))
-
 
 def delete_user(user):
     cursor.execute("DELETE FROM Utilisateur WHERE Pseudo = ?", (user,))
