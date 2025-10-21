@@ -8,7 +8,7 @@ cursor = conn.cursor()
 cursor.execute("PRAGMA foreign_keys = ON;")
 
 def create_db():
-    
+    """Initialise la database si non-présente au préalable."""
     # Création des tables requises si non-existantes
     cursor.executescript('''
     CREATE TABLE IF NOT EXISTS Utilisateur (
@@ -46,7 +46,7 @@ def is_user_on_db(pseudo, motdepasse):
     cursor.execute(""" SELECT MotDePasse FROM Utilisateur WHERE Pseudo = ? """, (pseudo,))
     hashedMDP = cursor.fetchone() #--> renvoie un tuple donc hashedMDP[0] est le Bytes que l'on doit envoyer
     #vérification du mdp et renvoie d'acceptation ou de refus
-    return AuthHandler.password_verification(motdepasse, hashedMDP[0]) 
+    return AuthHandler.password_verification(motdepasse, hashedMDP[0])
     
 def get_user_subnetting(pseudo, id_subnetting):
     #Vérification de l'utilisateur et recherche de sa découpe dans la db
