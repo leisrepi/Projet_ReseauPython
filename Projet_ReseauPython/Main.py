@@ -1,4 +1,3 @@
-import GUIHandlerOld
 import GUIController
 
 print ("Hello World !")
