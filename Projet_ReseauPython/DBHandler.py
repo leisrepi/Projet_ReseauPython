@@ -1,6 +1,6 @@
 import sqlite3 as sq
 import AuthHandler
-
+import AppException as appex
 
 #Ouverture de la db
 conn = sq.connect('DecoupeUtilisateurDB.db')
@@ -42,34 +42,75 @@ def create_db():
     print("DB créer")
 
 def is_user_on_db(pseudo, motdepasse):
+    if(pseudo is None or motdepasse is None):
+        print("Aucun pseudo ou mot de passe insérer.")
+        return False
     #récuperation du mdp hashé
     cursor.execute(""" SELECT MotDePasse FROM Utilisateur WHERE Pseudo = ? """, (pseudo,))
     hashedMDP = cursor.fetchone() #--> renvoie un tuple donc hashedMDP[0] est le Bytes que l'on doit envoyer
     #vérification du mdp et renvoie d'acceptation ou de refus
-    return AuthHandler.password_verification(motdepasse, hashedMDP[0])
+    try:
+        user = AuthHandler.password_verification(motdepasse, hashedMDP[0])
+    except:
+        return False
+    
+    print("L'utilisateur existe dans la db.")
+    return user
     
 def get_user_subnetting(pseudo, id_subnetting):
+    """ Sert à obtenir la découpe réseau spécifié de l'utilisateur.
+    
+        Args:
+            pseudo (String) : Pseudo de l'utilisateur.
+            id_subnetting (String) : Nom de la découpe du réseau.
+        
+        Returns:
+            Renvoie la découpe réseau de l'utilisateur.
+    """
     #Vérification de l'utilisateur et recherche de sa découpe dans la db
     cursor.execute(""" SELECT * FROM DecoupeReseau WHERE Pseudo = ? AND IdDR = ? """, (pseudo, id_subnetting))
     return cursor.fetchall()
 
 def get_user_specified_subnet(pseudo, id_subnetting, numSR):
+    """ Sert à obtenir le sous-réseaux spécifié de l'utilisateur.
+    
+        Args:
+            pseudo (String) : Pseudo de l'utilisateur.
+            id_subnetting (String) : Nom de la découpe du réseau.
+            numSR (int) : Numéro du sous-réseaux.
+        
+        Returns:
+            Renvoie le sous-réseaux de la découpe spécifié.
+    """
     cursor.execute(""" SELECT * FROM SousReseau WHERE Pseudo = ? AND IdDR = ? AND NumSR = ?""", (pseudo, id_subnetting, numSR))
     return cursor.fetchall()
 
 def insert_user(pseudo, mdp):
+    if(is_user_on_db(pseudo, mdp) is not False):
+        print("Refusé ! l'utilisateur existe deja .")
+        return appex.UserAlreadyInDBException
+
     mdp = AuthHandler.password_encrypt(mdp)
     cursor.execute("insert into Utilisateur(pseudo, MotDePasse) values (?, ?)", (pseudo, mdp))
     conn.commit()
     print('Utilisateur crée !')
 
-def insert_decoupe():
-    cursor.execute("Insert into DecoupeReseau(IdDR, Pseudo, AdresseIP, Masque) values(?, ?, ?, ?)",("Animaux","Baptiste", "caca","cucu",))
+def insert_decoupe(nomDecoupe, pseudo, AdresseReseaux, masqueReseaux):
+    if(nomDecoupe is None or pseudo is None or AdresseReseaux is None or masqueReseaux is None):
+        print("Un des champs est manquant !")
+        return False
+    
+    cursor.execute("Insert into DecoupeReseau(IdDR, Pseudo, AdresseIP, Masque) values(?, ?, ?, ?)",(nomDecoupe,pseudo, AdresseReseaux,masqueReseaux,))
     conn.commit()
-    print("insertion decoupe OK")
+    print("insertion de la decoupe effectue")
 
-def insert_sous_reseau():
-    cursor.execute("Insert into SousReseau(NumSR, NbMachine, IdDR, Pseudo) values(?, ?, ?, ?)",("1","4","Animaux","Baptiste",))
+def insert_sous_reseau(numSR, nbMachine, nomDecoupe, pseudo):
+    if(numSR is None or nbMachine is None or nomDecoupe is None or pseudo is None):
+        print("Un des champs est manquant !")
+        return False
+    cursor.execute("Insert into SousReseau(NumSR, NbMachine, IdDR, Pseudo) values(?, ?, ?, ?)",(numSR, nbMachine, nomDecoupe, pseudo,))
+    conn.commit()
+    print("Sous-réseaux creer")
 
 def delete_user(user):
     cursor.execute("DELETE FROM Utilisateur WHERE Pseudo = ?", (user,))
