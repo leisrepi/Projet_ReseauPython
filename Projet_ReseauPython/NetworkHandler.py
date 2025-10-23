@@ -51,6 +51,8 @@ def create_network(address, mask):
     """ 
     if(not is_mask_valid(mask)):
         raise NetmaskValueError("Masque non valide ou vide")
+    if(mask[0] != "/"):
+        mask = "/" + mask
     try:   
         return IPv4Network((address + mask), strict=False)
     except AddressValueError:
