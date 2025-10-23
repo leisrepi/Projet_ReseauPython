@@ -1,3 +1,7 @@
 shema menu.kra
 shema menu.kra-autosave.kra
-__pycache__/
+
+Projet_ReseauPython/__pycache__
+Projet_ReseauPython/testSession.py
+
+Projet_ReseauPython/.vscode/settings.json

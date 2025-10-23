@@ -1,14 +1,18 @@
+import GUIHandlerOld
+import GUIController
 import AuthHandler
 import DBHandler
 
-print ("Hello World !")
-print ("test version 0.0.3")
-print ("voici ce que j'ai ajouter dans le main")
-print ("voici ce que j'ai ajouter depuis la branche 2")
-print ("il ne reste que la branche nouvelle fonctionnalité")
-print ("j'ai refussioner avec la branche main")
+#Important ! permet au sous processus "_sign_process" de "AuthHandler" de se lancer correctement sous Windows
+if (__name__ == "__main__"):
+    print ("test version 0.1.0")
+  
+
+    #GUIHandlerOld.init_GUI()
+    
+
+    DBHandler.create_db()
+    
+    guiController = GUIController.GUIController.get_instance()
 
 
-#DBHandler.create_db()
-#DBHandler.insert_user("test", "test")
-print(DBHandler.is_user_on_db("test", "test"))
