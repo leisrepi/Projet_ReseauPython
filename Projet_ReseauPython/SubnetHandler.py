@@ -2,7 +2,7 @@
 #             Imports
 # --------------------------------------
 
-from math import log2, ceil
+from math import log2, ceil, floor
 # Exceptions personnalisées
 from AppException import TooManyMachinesException
 
@@ -34,16 +34,18 @@ def calculate_step(nb_machines):
             nb_machines (int) : entier nombre de machines par sous-réseau
 
         Returns:
-            return (tuple(int, int)) : Renvoie un tuple (pas, octet) où pas est le pas entre chaque sous-réseau et octet est l'octet du masque à modifier
+            return (string) : Renvoie un string <[pas] sur l'octet [octet]> où pas est le pas entre chaque sous-réseau et octet est l'octet du masque à modifier
     """
-    if(nb_machines <= 256):
-        return nb_machines, 4
-    elif(nb_machines <= 65536):
-        return nb_machines // 256, 3
-    elif(nb_machines <= 16777216):
-        return nb_machines // 65536, 2
-    elif(nb_machines <= 4294967296):
-        return nb_machines // 16777216, 1
+
+    if(nb_machines < 256):
+        return str(nb_machines) + " sur l'octet 4"
+    elif(nb_machines < 65536):
+        # // pour division entière
+        return str(floor(nb_machines / 256)) + " sur l'octet 3"
+    elif(nb_machines < 16777216):
+        return str(floor(nb_machines / 65536)) + " sur l'octet 2"
+    elif(nb_machines < 4294967296):
+        return str(floor(nb_machines / 16777216)) + " sur l'octet 1"
     return 
 
 # Vérification de la possibilité de faire une découpe classique
@@ -88,10 +90,11 @@ def calculate_subnetting(network, nb_machines_list):
             nb_machines_list (list[int]) : liste du nombre de machines par sous-réseau
 
         Returns:
-            Renvoie une liste de liste contenant les informations des sous-réseaux [adresse_sous_reseau, adresse_broadcast, premiere_ip, derniere_ip
+            return (list[list[int]]) : Renvoie une liste de liste contenant les informations des sous-réseaux [adresse_sous_reseau, adresse_broadcast, premiere_ip, derniere_ip
+
 
         Raises:
-            Lève une exception TooManyMachinesException si le nombre de sous-réseaux dépasse 100
+            TooManyMachinesException : Lève une exception TooManyMachinesException si le nombre de sous-réseaux dépasse 100
     """
     if(not verify_subnetting_possibility(network, nb_machines_list)):
         raise ValueError("Découpe classique impossible avec les paramètres fournis.")
