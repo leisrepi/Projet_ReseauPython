@@ -90,7 +90,7 @@ def calculate_subnetting(network, nb_machines_list):
             nb_machines_list (list[int]) : liste du nombre de machines par sous-réseau
 
         Returns:
-            return (list[list[int]]) : Renvoie une liste de liste contenant les informations des sous-réseaux [adresse_sous_reseau, adresse_broadcast, premiere_ip, derniere_ip
+            return (list[list[string]]) : Renvoie une liste de liste contenant les informations des sous-réseaux [adresse_sous_reseau, adresse_broadcast, premiere_ip, derniere_ip
 
 
         Raises:
