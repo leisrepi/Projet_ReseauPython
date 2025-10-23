@@ -19,13 +19,22 @@ class LoginMenu:
 		tk.Label(self.root, text="Pseudonyme:", font=H3_FONT).pack(pady=(20, 0))
 		self.pseudonyme_entry = tk.Entry(self.root, font=P_FONT, width=30)
 		self.pseudonyme_entry.pack(pady=5)
+		
 
 		tk.Label(self.root, text="Mot de passe:", font=H3_FONT).pack(pady=(10, 0))
 		self.password_entry = tk.Entry(self.root, show="*", font=P_FONT, width=30)
 		self.password_entry.pack(pady=5)
 
-		tk.Button(self.root, text="Se connecter", font=H3_FONT, command=self.on_login).pack(pady=20)
+		#TODO retirer ce debug (valeur de connection par defaut)
+		self.pseudonyme_entry.insert(0,"test")
+		self.password_entry.insert(0,"test")
 
+		self.validate_information = tk.Button(self.root, text="Se connecter", font=H3_FONT, command=self.on_login)
+		
+		self.validate_information.pack(pady=20)
+
+	def change_login_button(self, state):
+		self.validate_information.config(state=state)
 
 	def on_login(self):
 		pseudonyme = self.pseudonyme_entry.get()

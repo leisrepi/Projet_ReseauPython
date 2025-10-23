@@ -23,7 +23,13 @@ _sign_process : Process = None #processus de signature
 
 
 
-def _create_session(connexion):
+def _session_process(connexion):
+    """fonction utiliser par le sous processus, a ne pas appeler hors de celui ci
+    Args:
+        connexion (PipeConnexion): le coter "enfant" du pipe, va recevoir les demande du thread principal
+    Returns:
+        (None) : ne retourne rien
+    """
     # --- CONFIG ---
     SESSION_LIFETIME = 10  # durée de vie en secondes (ici 10s pour tester)
     SECRET_KEY = secrets.token_bytes(32)  # clé secrète de 32 bytes (32 * 8 = 256 bits) => très grand pour être sûr qu'elle ne soit pas trouvée par force brute
@@ -41,7 +47,7 @@ def _create_session(connexion):
             session_expiration_time (int) : temps en s depuis 1970 ou la session expirera 
             random_per_session (str) : chaîne aléatoire unique par session
         Returns:
-            str : la signature HMAC-SHA256 encodée en Base64
+            return (str) : la signature HMAC-SHA256 encodée en Base64
         """
         
         if "|" in user_name:
@@ -59,7 +65,13 @@ def _create_session(connexion):
             #urlsafe_b64encode → évite + et /, donc OK pour les URLs/cookies.
         
     def _verify_session(old_session : session) -> bool:
-        #TODO faire la documentation
+        """Fonction interne au sous processus de verification (ne pas utiliser en dehors)
+            Verifie la session et renvoie si elle est valide ou non
+            Args:
+                old_session (session) : la session a verifier
+            Returns:
+                return (bool) : valide?
+        """
         if old_session is None:
             return False #la session ne peut pas être vide
         now = int(time.time())
@@ -89,17 +101,16 @@ def _create_session(connexion):
                     #rafraîchissement de session
                     user_name = old_session.user_name
                 if "|" in user_name:
-                    #TODO : crée une exception personnalisée
-                    #raise ValueError("Le nom d'utilisateur ne doit pas contenir de pipe '|'")
+                    #le nom d'utilisateur ne doit pas contenir de pipe '|'
                     connexion.send(None)
                     continue
                 
-                if password is not None:
+                if password is not None: #mot de passe fourni -> creation de session classique
                     #vérification du mot de passe
                     if not DBHandler.is_user_on_db(user_name, password):
                         connexion.send(None)
                         continue
-                elif old_session is not None:
+                elif old_session is not None: #pas de mdp fournis mais une ancienne session -> rafraîchissement
                     #vérification de l'ancienne session
                     
                     if not _verify_session(old_session=old_session):
@@ -107,7 +118,7 @@ def _create_session(connexion):
                         connexion.send(None)
                         continue
                 else:
-                    # neither password nor old_session provided
+                    # ni mot de passe ni ancienne session fournis
                     connexion.send(None)
                     continue
 
@@ -125,9 +136,9 @@ def _create_session(connexion):
                 old_session : session = args
                 connexion.send(_verify_session(old_session))
             elif commande == "exit":
-                connexion.send(False) #on renvoie false au lieux de truc pour eviter les attaques par timing 
-                #(tu fait une demande au sous procéssus sans jamais la récuperer, en espérant que la fonction de sécu)
-                #la récupère et accepte ta demande.
+                connexion.send(False) #on renvoie false au lieux de true pour eviter les attaques par timing 
+                #(tu fait une demande au sous procéssus sans jamais la récuperer, en espérant que la fonction de sécu
+                #la récupère et accepte ta demande).
                 break
     finally:
         try:
@@ -135,7 +146,7 @@ def _create_session(connexion):
         except Exception:
             pass
 
-#XXX : attaque possible par timing, faire une demande qui renvera
+
 
 def _shutdown():
     """Ferme proprement le processus de signature"""
@@ -174,25 +185,19 @@ atexit.register(_shutdown)
 
 
 
-def _verify_sign_process_launch():
+def _verify_session_process_launch():
     """Vérifie que le processus de signature est lancé, sinon le lance."""
     global _parent, _child, _sign_process      
 
     if _sign_process is None or not _sign_process.is_alive():
         _parent, _child = Pipe(duplex=True) #crée un pipe de communication bi-directionnel
-        _sign_process = Process(target=_create_session, args=(_child,), daemon=True) #crée un processus enfant qui exécute la fonction _signer avec l'extrémité enfant du pipe
+        _sign_process = Process(target=_session_process, args=(_child,), daemon=True) #crée un processus enfant qui exécute la fonction _signer avec l'extrémité enfant du pipe
         _sign_process.start() #démarre le processus enfant
 
 
-#XXXTODO : lock la création de session au sein du sous-processus ainsi que la verification du mdp
-# lock la verification de signaturue au sein du sous-processus
-# -> impossible d'obtenir un hash de signature, sois on crée une sessions depuis le
-# pseudo (string aléatoire générer en interne), qui renvera une signature mais avec le texte aléatoire
-# signature obtenue uniquement si le mdp correct est fourni ou si une signature valide est fournie
+#XXX attaque lier au changement d'heure windows ?
 
-# attaque lier au changement d'heure windows ?
 
-#XXX peu etre appeler de l'extérieux, la sécuriter saute donc!!!
 class session:
     def __init__(self, user_name: str):
         self.user_name = user_name
@@ -204,16 +209,15 @@ class session:
 
 
 def verify_session(session: session) -> bool:
-    #TODO mettre a jour la documentation
     """
     Vérifie que la session n'est pas expirée et que la signature est valide.
     Args:
-        token (dict) : dictionnaire contenant les informations de la session (user_name, session_expiration_time, random_per_session, signature)
+        session (session) : objet sessions
     Returns:
-        bool : True si la session est valide, False sinon
+        return (bool) : True si la session est valide, False sinon
     """
     
-    return _verify_sign_process_launch() or _parent.send(("verify_session", session)) or _parent.recv()
+    return _verify_session_process_launch() or _parent.send(("verify_session", session)) or _parent.recv()
 
 def create_session(user_name: str, password: str = None) -> session:
     """Crée une nouvelle session pour un utilisateur donné.
@@ -224,7 +228,7 @@ def create_session(user_name: str, password: str = None) -> session:
         Returns:
             return (session) : Renvoie un objet session si la création a réussi, None sinon
     """
-    _verify_sign_process_launch()
+    _verify_session_process_launch()
     _parent.send(("create_session", (user_name, password, None)))
     return _parent.recv()
 
@@ -236,14 +240,14 @@ def refresh_session(old_session : session) -> session:
         Returns:
             return (session) : Renvoie un nouvel objet session si le rafraîchissement a réussi, None sinon
     """
-    _verify_sign_process_launch()
+    _verify_session_process_launch()
     _parent.send(("create_session", (None, None, old_session)))
     return _parent.recv()
 
 def password_encrypt(password):
     """Chiffre un mot de passe avec bcrypt.
         Args:
-            passwd (string) : mot de passe en blanc à chiffrer
+            password (string) : mot de passe en blanc à chiffrer
 
         Returns:
             return (bytes) : Renvoie le mot de passe hashé
@@ -257,11 +261,10 @@ def password_encrypt(password):
     hashedDepart = bcrypt.hashpw(passwordDepart, saltDepart)
     return hashedDepart
 
-#TODO : renommer en is_password_correct
-def password_verification(password, hashed):
+def is_password_correct(password, hashed):
     """Vérifie un mot de passe avec son hash bcrypt.
         Args:
-            passwd (string) : mot de passe en blanc à vérifier
+            password (string) : mot de passe en blanc à vérifier
             hashed (bytes) : hash du mot de passe à vérifier
 
         Returns:
