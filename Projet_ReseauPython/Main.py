@@ -12,7 +12,5 @@ if (__name__ == "__main__"):
     
 
     DBHandler.create_db()
-    
+    #DBHandler.insert_user("test", "test")
     guiController = GUIController.GUIController.get_instance()
-
-

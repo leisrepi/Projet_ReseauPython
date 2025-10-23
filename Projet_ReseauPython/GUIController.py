@@ -70,7 +70,7 @@ class GUIController:
 
         self.set_cursor_default()
         self.view.change_login_button(tk.ACTIVE)
-        print(self.session)
+        print("session créée : ", self.session)
         if self.session != None and AuthHandler.verify_session(self.session):
             print("Login réussi !")
             self.clean_view()

@@ -50,12 +50,13 @@ def is_user_on_db(pseudo, motdepasse):
     hashedMDP = cursor.fetchone() #--> renvoie un tuple donc hashedMDP[0] est le Bytes que l'on doit envoyer
     #vérification du mdp et renvoie d'acceptation ou de refus
     try:
-        user = AuthHandler.password_verification(motdepasse, hashedMDP[0])
+        answer = AuthHandler.is_password_correct(motdepasse, hashedMDP[0])
     except:
+        print("L'utilisateur n'existe pas dans la db.")
         return False
     
     print("L'utilisateur existe dans la db.")
-    return user
+    return answer
     
 def get_user_subnetting(pseudo, id_subnetting):
     """ Sert à obtenir la découpe réseau spécifié de l'utilisateur.

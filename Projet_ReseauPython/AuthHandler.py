@@ -219,7 +219,7 @@ def verify_session(session: session) -> bool:
     
     return _verify_session_process_launch() or _parent.send(("verify_session", session)) or _parent.recv()
 
-def create_session(user_name: str, password: str = None) -> session:
+def create_session(user_name: str, password: str) -> session:
     """Crée une nouvelle session pour un utilisateur donné.
         Args:
             user_name (string) : chaîne de caractères du pseudo de l'utilisateur
@@ -277,18 +277,3 @@ def is_password_correct(password, hashed):
         return True
     else:
         return False
-
-# Permet de se connecter à un compte utilisateur
-def login(pseudo, password):
-    """Vérifie les identifiants d'un utilisateur.
-        Args:
-            pseudo (string) : chaîne de caractères du pseudo de l'utilisateur
-            password (bytes) : mot de passe en blanc
-
-        Returns:
-            return (bool) : Renvoie True si les identifiants sont corrects, False sinon
-    """
-    #
-    if DBHandler.is_user_on_db(pseudo, password):
-        return session(pseudo)
-    return None
