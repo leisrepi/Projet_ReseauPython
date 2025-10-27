@@ -7,8 +7,6 @@ conn = sq.connect('DecoupeUtilisateurDB.db')
 cursor = conn.cursor()
 cursor.execute("PRAGMA foreign_keys = ON;")
 
-#TODO : Vérifier le principe de session et autorisé les changement seulment quand la session est valide  
-
 def create_db():
     
     # Création des tables requises si non-existantes
@@ -93,9 +91,7 @@ def get_user_specified_subnet(session, pseudo, id_subnetting, numSR):
     cursor.execute(""" SELECT * FROM SousReseau WHERE Pseudo = ? AND IdDR = ? AND NumSR = ?""", (pseudo, id_subnetting, numSR))
     return cursor.fetchall()
 
-def insert_user(session, pseudo, mdp):
-    if(ath.verify_session(session) is not True):
-        raise AppException.NotAuthentifyException
+def insert_user( pseudo, mdp):
     if(is_user_on_db(pseudo, mdp) is not False):
         print("Refusé ! l'utilisateur existe deja .")
         return AppException.UserAlreadyInDBException
