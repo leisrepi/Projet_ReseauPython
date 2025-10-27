@@ -1,6 +1,6 @@
 
 from ipaddress import IPv4Address, IPv4Network
-from Subnet import define_mask_by_ip_class
+from NetworkHandler import define_mask_by_ip_class
 
 IpAddress = "192.168.3.55"
 SNMask = "255.255.128.0"
