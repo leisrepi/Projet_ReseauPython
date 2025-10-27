@@ -56,7 +56,7 @@ def is_ip_valid(address):
     """
     try:
         ipadress = IPv4Address(address)
-        return not ipadress.is_private
+        return not ipadress.is_reserved
     except AddressValueError:
         return False
     
