@@ -1,9 +1,15 @@
+# --------------------------------------
+#             Imports
+# --------------------------------------
+
+from ipaddress import IPv4Address, AddressValueError
 import AppException
 from ipaddress import IPv4Address, IPv4Network
 from NetworkHandler import define_mask_by_ip_class
 
-IpAddress = "192.168.3.55"
-SNMask = "255.255.128.0"
+# --------------------------------------
+#             Fonctions
+# --------------------------------------
 
 #Retourne l'Ip du réseau et son adresse broadcast et le sous réseaux si possible
 def get_network_information_from_ip_address_and_mask(IpAddress, SNMask):
@@ -38,4 +44,37 @@ def get_network_information_from_ip_address_and_mask(IpAddress, SNMask):
     SNBroadcast = IPv4Network(str(SNIpAddress)+"/"+SNMask, strict=False).broadcast_address
     return IpNetwork.network_address, IpNetwork.broadcast_address, SNIpAddress, SNBroadcast
 
-print(get_network_information_from_ip_address_and_mask(IpAddress, SNMask)) 
+# Vérification de la validité de l'adresse IP. 
+def is_ip_valid(address):  
+    """Vérifie si une adresse IP est valide
+
+        Args:
+            address (IPv4Adress) : chaîne de caractères de l'adresse IP
+
+        Returns:
+            return (boolean) : Renvoie true si valide, false sinon
+    """
+    try:
+        ipadress = IPv4Address(address)
+        return not ipadress.is_private
+    except AddressValueError:
+        return False
+    
+# Création d'une adresse IP à partir d'une chaîne de caractères (renvoie None si l'adresse n'est pas valide)
+def create_ip_address(ip_string):
+    """Crée une adresse IP à partir d'une chaîne de caractères
+
+        Args:
+            ip_string (string) : chaîne de caractères de l'adresse IP
+
+        Returns: 
+            return (IPv4Adress) : Renvoie une instance de IPv4Address 
+
+        Raises:  
+            AdressValueError si l'adresse n'est pas valide
+    """
+    try:
+        return IPv4Address(ip_string)
+    except AddressValueError:
+        raise AddressValueError("Adresse IP non valide")
+    
