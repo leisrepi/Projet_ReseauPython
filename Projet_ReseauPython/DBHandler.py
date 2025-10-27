@@ -43,9 +43,8 @@ def create_db():
     conn.commit()
     print("DB créer")
 
-def is_user_on_db(session ,pseudo, motdepasse):
-    if(ath.verify_session(session) is not True):
-        raise AppException.NotAuthentifyException
+def is_user_on_db(pseudo, motdepasse):
+    
     if(pseudo is None or motdepasse is None):
         print("Aucun pseudo ou mot de passe insérer.")
         return False
