@@ -1,6 +1,6 @@
 import sqlite3 as sq
-import AuthHandler
-import AppException as appex
+import AuthHandler as ath
+import AppException 
 
 #Ouverture de la db
 conn = sq.connect('DecoupeUtilisateurDB.db')
@@ -43,7 +43,9 @@ def create_db():
     conn.commit()
     print("DB créer")
 
-def is_user_on_db(pseudo, motdepasse):
+def is_user_on_db(session ,pseudo, motdepasse):
+    if(ath.verify_session(session) is not True):
+        raise AppException.NotAuthentifyException
     if(pseudo is None or motdepasse is None):
         print("Aucun pseudo ou mot de passe insérer.")
         return False
@@ -52,7 +54,7 @@ def is_user_on_db(pseudo, motdepasse):
     hashedMDP = cursor.fetchone() #--> renvoie un tuple donc hashedMDP[0] est le Bytes que l'on doit envoyer
     #vérification du mdp et renvoie d'acceptation ou de refus
     try:
-        answer = AuthHandler.is_password_correct(motdepasse, hashedMDP[0])
+        answer = ath.is_password_correct(motdepasse, hashedMDP[0])
     except:
         print("L'utilisateur n'existe pas dans la db.")
         return False
@@ -60,7 +62,7 @@ def is_user_on_db(pseudo, motdepasse):
     print("L'utilisateur existe dans la db.")
     return answer
     
-def get_user_subnetting(pseudo, id_subnetting):
+def get_user_subnetting(session, pseudo, id_subnetting):
     """ Sert à obtenir la découpe réseau spécifié de l'utilisateur.
     
         Args:
@@ -70,11 +72,13 @@ def get_user_subnetting(pseudo, id_subnetting):
         Returns:
             Renvoie la découpe réseau de l'utilisateur.
     """
+    if(ath.verify_session(session) is not True):
+        raise AppException.NotAuthentifyException
     #Vérification de l'utilisateur et recherche de sa découpe dans la db
     cursor.execute(""" SELECT * FROM DecoupeReseau WHERE Pseudo = ? AND IdDR = ? """, (pseudo, id_subnetting))
     return cursor.fetchall()
 
-def get_user_specified_subnet(pseudo, id_subnetting, numSR):
+def get_user_specified_subnet(session, pseudo, id_subnetting, numSR):
     """ Sert à obtenir le sous-réseaux spécifié de l'utilisateur.
     
         Args:
@@ -85,20 +89,26 @@ def get_user_specified_subnet(pseudo, id_subnetting, numSR):
         Returns:
             Renvoie le sous-réseaux de la découpe spécifié.
     """
+    if(ath.verify_session(session) is not True):
+        raise AppException.NotAuthentifyException
     cursor.execute(""" SELECT * FROM SousReseau WHERE Pseudo = ? AND IdDR = ? AND NumSR = ?""", (pseudo, id_subnetting, numSR))
     return cursor.fetchall()
 
-def insert_user(pseudo, mdp):
+def insert_user(session, pseudo, mdp):
+    if(ath.verify_session(session) is not True):
+        raise AppException.NotAuthentifyException
     if(is_user_on_db(pseudo, mdp) is not False):
         print("Refusé ! l'utilisateur existe deja .")
-        return appex.UserAlreadyInDBException
+        return AppException.UserAlreadyInDBException
 
-    mdp = AuthHandler.password_encrypt(mdp)
+    mdp = ath.password_encrypt(mdp)
     cursor.execute("insert into Utilisateur(pseudo, MotDePasse) values (?, ?)", (pseudo, mdp))
     conn.commit()   
     print('Utilisateur crée !')
 
-def insert_decoupe(nomDecoupe, pseudo, AdresseReseaux, masqueReseaux):
+def insert_decoupe(session, nomDecoupe, pseudo, AdresseReseaux, masqueReseaux):
+    if(ath.verify_session(session) is not True):
+        raise AppException.NotAuthentifyException
     if(nomDecoupe is None or pseudo is None or AdresseReseaux is None or masqueReseaux is None):
         print("Un des champs est manquant !")
         return False
@@ -107,7 +117,9 @@ def insert_decoupe(nomDecoupe, pseudo, AdresseReseaux, masqueReseaux):
     conn.commit()
     print("insertion de la decoupe effectue")
 
-def insert_sous_reseau(numSR, nbMachine, nomDecoupe, pseudo):
+def insert_sous_reseau(session, numSR, nbMachine, nomDecoupe, pseudo):
+    if(ath.verify_session(session) is not True):
+        raise AppException.NotAuthentifyException
     if(numSR is None or nbMachine is None or nomDecoupe is None or pseudo is None):
         print("Un des champs est manquant !")
         return False

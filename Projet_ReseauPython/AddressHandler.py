@@ -1,4 +1,4 @@
-
+import AppException
 from ipaddress import IPv4Address, IPv4Network
 from Subnet import define_mask_by_ip_class
 
@@ -26,8 +26,8 @@ def get_network_information_from_ip_address_and_mask(IpAddress, SNMask):
 
     #vérification de l'appartenance du masque dde sous réseaux par rapport a celui du réseaux (vérification que celui-ci n'est pas plus grand)
     if(str(IpNetwork.netmask) < SNMask):
-        raise #SNMaskErrorException 
-    #TODO: gérer l'erreur dans le cas ou le sous réseaux est plus grand que le réseaux lui meme (enlever le #)
+        raise AppException.SNMaskErrorException 
+    #TODO: gérer l'erreur dans le cas ou le sous réseaux est plus grand que le réseaux lui meme
 
     if(IpNetwork.netmask == SNMask): #Vérification de la possibilité de sous-réseaux
         return IpNetwork.network_address, IpNetwork.broadcast_address, None, None
