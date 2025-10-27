@@ -2,89 +2,14 @@
 #             Imports
 # --------------------------------------
 
-from ipaddress import IPv4Network, IPv4Address, AddressValueError, NetmaskValueError
-from math import log2, ceil
+from math import log2, ceil, floor
 # Exceptions personnalisées
-from AppException import TooManyMachinesException, InvalidMaskException
+from AppException import TooManyMachinesException
 
 # --------------------------------------
 #             Fonctions
 # --------------------------------------
-
-# Vérification de la validité de l'adresse IP. 
-def is_ip_valid(address):  
-    """Vérifie si une adresse IP est valide
-
-        Args:
-            address (IPv4Adress) : chaîne de caractères de l'adresse IP
-
-        Returns:
-            return (boolean) : Renvoie true si valide, false sinon
-    """
-    try:
-        ipadress = IPv4Address(address)
-        return not ipadress.is_private
-    except AddressValueError:
-        return False
-# Vérification de la validité du masque.
-def is_mask_valid(mask):
-    """Vérifie si un masque est valide
-
-    Args:
-        mask (string): chaîne de caractères du masque
-    
-    Returns:
-        return (boolean): Renvoie true si le masque est valide, false sinon
-    """
-    if(mask[0] != "/"):
-        mask = "/" + mask
-    if(mask[1] == "0"):
-        return False
-    try:
-        IPv4Network(("0.0.0.0"+mask), strict=False)   
-        return True
-    except NetmaskValueError:
-        return False
-                    
-# Création d'une adresse IP à partir d'une chaîne de caractères (renvoie None si l'adresse n'est pas valide)
-def create_ip_adress(ip_string):
-    """Crée une adresse IP à partir d'une chaîne de caractères
-
-        Args:
-            ip_string (string): chaîne de caractères de l'adresse IP
-
-        Returns: 
-            return (IPv4Adress) : Renvoie une instance de IPv4Address ou lève une AdressValueError si l'adresse n'est pas valide
-    """
-    try:
-        return IPv4Address(ip_string)
-    except AddressValueError:
-        raise AddressValueError("Adresse IP non valide")
-
-# Création d'un réseau à partir d'une adresse IP et d'un masque (renvoie None si le masque n'est pas valide)
-def create_network(address, mask):
-    """Crée un réseau à partir d'une adresse IP et d'un masque
-
-    Args:
-        address (string) : chaîne de caractères de l'adresse IP
-        mask (string) : chaîne de caractères du masque
-
-    Returns:
-        return (IPv4Network) : Renvoie une instance de IPv4Network
-
-    Raises:
-        Lève une NetmaskValueError si le masque n'est pas valide
-        Lève une AddressValueError si l'adresse IP n'est pas valide
-    """ 
-    if(mask[0] != "/"):
-        mask = "/" + mask
-    try:   
-        return IPv4Network((address + mask), strict=False)
-    except NetmaskValueError:
-        raise NetmaskValueError("Masque non valide")
-    except AddressValueError:
-        raise AddressValueError("Adresse IP non valide")
-
+                   
 # Calcul du nombre de machines maximum sur une liste de machines données(par exposant de 2)
 def calculate_nb_machines_max(nb_machines_list):
 # log2 exemple : log2(32) = 5 car 2^5 = 32
@@ -109,41 +34,19 @@ def calculate_step(nb_machines):
             nb_machines (int) : entier nombre de machines par sous-réseau
 
         Returns:
-            return (tuple(int, int)) : Renvoie un tuple (pas, octet) où pas est le pas entre chaque sous-réseau et octet est l'octet du masque à modifier
+            return (string) : Renvoie un string <[pas] sur l'octet [octet]> où pas est le pas entre chaque sous-réseau et octet est l'octet du masque à modifier
     """
-    if(nb_machines <= 256):
-        return nb_machines, 4
-    elif(nb_machines <= 65536):
-        return nb_machines // 256, 3
-    elif(nb_machines <= 16777216):
-        return nb_machines // 65536, 2
-    elif(nb_machines <= 4294967296):
-        return nb_machines // 16777216, 1
-    return 
 
-# Définition du masque en fonction de la classe d'adresse IP classfull (renvoie None si l'adresse ne peut pas avoir de masque)
-def define_mask_by_ip_class(ip_address):
-    """Définit le masque en fonction de la classe d'adresse IP classfull mise en argument
-        Args:
-            ip_address (string) : IPv4Address à partir de laquelle on déduit la classe
-        Returns:
-            return (string) : masque sous forme de chaîne de caractères
-        Raises:
-            InvalidMaskException : si l'adresse ne peut pas avoir de masque (classe D ou E)
-    """
-    #IPV4Network reprend la première adresse et le masque
-    CLASS_A = IPv4Network(("0.0.0.0", "128.0.0.0"))
-    CLASS_B = IPv4Network(("128.0.0.0", "192.0.0.0"))
-    CLASS_C = IPv4Network(("192.0.0.0", "224.0.0.0"))
-    # Renvoie le masque adéquat en fonction de si l'adresse se trouve dans la plage d'adresses de la classe
-    if ip_address in CLASS_A:
-        return "255.0.0.0"
-    elif ip_address in CLASS_B:
-        return '255.255.0.0'
-    elif ip_address in CLASS_C:
-        return "255.255.255.0"
-    else:
-        raise InvalidMaskException("L'adresse IP ne peut pas avoir de masque (classe D ou E)")
+    if(nb_machines < 256):
+        return str(nb_machines) + " sur l'octet 4"
+    elif(nb_machines < 65536):
+        # // pour division entière
+        return str(floor(nb_machines / 256)) + " sur l'octet 3"
+    elif(nb_machines < 16777216):
+        return str(floor(nb_machines / 65536)) + " sur l'octet 2"
+    elif(nb_machines < 4294967296):
+        return str(floor(nb_machines / 16777216)) + " sur l'octet 1"
+    return 
 
 # Vérification de la possibilité de faire une découpe classique
 def verify_subnetting_possibility(network, nb_machines_list):
@@ -187,11 +90,15 @@ def calculate_subnetting(network, nb_machines_list):
             nb_machines_list (list[int]) : liste du nombre de machines par sous-réseau
 
         Returns:
-            Renvoie une liste de liste contenant les informations des sous-réseaux [adresse_sous_reseau, adresse_broadcast, premiere_ip, derniere_ip
+            return (list[list[string]]) : Renvoie une liste de liste contenant les informations des sous-réseaux [adresse_sous_reseau, adresse_broadcast, premiere_ip, derniere_ip
+
 
         Raises:
-            Lève une exception TooManyMachinesException si le nombre de sous-réseaux dépasse 100
+            TooManyMachinesException : Lève une exception TooManyMachinesException si le nombre de sous-réseaux dépasse 100
     """
+    if(not verify_subnetting_possibility(network, nb_machines_list)):
+        raise ValueError("Découpe classique impossible avec les paramètres fournis.")
+        
     nb_machines = calculate_nb_machines_max(nb_machines_list)
     nb_subnet = len(nb_machines_list)
 
@@ -247,40 +154,40 @@ def calculate_subnetting(network, nb_machines_list):
 # Tests peut être supprimé une fois le module terminé
 
 
-address = "18.0.0.0"
-if(not is_ip_valid(address)):
-    print("Adresse IP non valide")
-    exit()
-mask = "255.255.0.0"
-if(not is_mask_valid(mask)):
-    print("Masque non valide")
-    exit()
+# address = "18.0.0.0"
+# if(not is_ip_valid(address)):
+#     print("Adresse IP non valide")
+#     exit()
+# mask = "255.255.0.0"
+# if(not is_mask_valid(mask)):
+#     print("Masque non valide")
+#     exit()
 
-# mask = define_mask_by_ip_class(create_ip_adress(adress))
-nb_machines_list = [7, 6, 5, 4, 3, 2, 1, 10, 1, 10, 5, 10, 1, 1, 1, 1, 1, 1]
-
-
-network = create_network(address, mask)
-print("Adresse réseau :", network.network_address)
-print("Masque :", network.netmask)
-print("Adresse de diffusion :", network.broadcast_address)
-print("Nombre d'hôtes :", network.num_addresses - 2)
-hosts = list(network.hosts())
-print("Plage d'adresses disponible :", hosts[0], "à", hosts[-1])
+# # mask = define_mask_by_ip_class(create_ip_adress(adress))
+# nb_machines_list = [7, 6, 5, 4, 3, 2, 1, 10, 1, 10, 5, 10, 1, 1, 1, 1, 1, 1]
 
 
-if(verify_subnetting_possibility(network, nb_machines_list)):
-    try:
-        result = calculate_subnetting(network, nb_machines_list)
-        print(result)
-    except TooManyMachinesException as e:
-        print("Erreur :", e)
-elif(verify_vlsm_possibility(network, nb_machines_list)):
-    print("VLSM possible")
-    exit()
-else:
-    print("Découpe impossible")
-    exit()
+# network = create_network(address, mask)
+# print("Adresse réseau :", network.network_address)
+# print("Masque :", network.netmask)
+# print("Adresse de diffusion :", network.broadcast_address)
+# print("Nombre d'hôtes :", network.num_addresses - 2)
+# hosts = list(network.hosts())
+# print("Plage d'adresses disponible :", hosts[0], "à", hosts[-1])
+
+
+# if(verify_subnetting_possibility(network, nb_machines_list)):
+#     try:
+#         result = calculate_subnetting(network, nb_machines_list)
+#         print(result)
+#     except TooManyMachinesException as e:
+#         print("Erreur :", e)
+# elif(verify_vlsm_possibility(network, nb_machines_list)):
+#     print("VLSM possible")
+#     exit()
+# else:
+#     print("Découpe impossible")
+#     exit()
 
 
 

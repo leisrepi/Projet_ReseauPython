@@ -1,4 +1,3 @@
-import GUIHandlerOld
 import GUIController
 import AuthHandler
 import DBHandler
