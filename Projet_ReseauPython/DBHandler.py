@@ -7,8 +7,6 @@ conn = sq.connect('DecoupeUtilisateurDB.db')
 cursor = conn.cursor()
 cursor.execute("PRAGMA foreign_keys = ON;")
 
-#TODO : Vérifier le principe de session et autorisé les changement seulment quand la session est valide  
-
 def create_db():
     
     # Création des tables requises si non-existantes
