@@ -1,39 +1,10 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 from ipaddress import IPv4Address, IPv4Network
+from AddressHandler import is_ip_valid, create_ip_address
+from NetworkHandler import define_mask_by_ip_class
 
 #Fonctions inchangées depuis la version 3
-#Adresse IP valide ou pas
-def validation_ip(ip_string):
-    try:
-        IPv4Address(ip_string)
-        return True
-    except ValueError:
-        return False
-
-#Création d'une adresse IP en chaine de caractères -> None si adresse non valide   
-def ip_adress_string(ip_string):
-    try:
-        return IPv4Address(ip_string)
-    except ValueError:
-        return None
-
-#Définition du masque en fonction de la classe de l'adresse IP
-def definition_masque(ip_adress):
-    #Attribution des ip aux différentes classes (reprend la première adresse et le masque)
-    class_a = IPv4Network(("0.0.0.0", "128.0.0.0"))
-    class_b = IPv4Network(("128.0.0.0", "192.0.0.0"))
-    class_c = IPv4Network(("192.0.0.0", "224.0.0.0"))
-
-    #Attribution du masque en fonction des classes
-    if ip_adress in class_a:
-        return "255.0.0.0"
-    elif ip_adress in class_b:
-        return "255.255.0.0"
-    elif ip_adress in class_c:
-        return "255.255.255.0"
-    else:
-        return None
 
 #Vérifier si une IP appartient bien au réseau
 def appartient_au_reseau(ip_str, reseau_str, masque_str):
@@ -193,7 +164,8 @@ class App(tk.Tk):
         masque_input = self.masque_var.get().strip()
 
         #Validation de l'IP
-        if not validation_ip(ip):
+        if not is_ip_valid(ip):
+            print(reseau_input)
             messagebox.showerror("Erreur", "Adresse IP invalide")
             self._set_status("Adresse IP invalide", ok=False)
             self._set_details("")
@@ -213,10 +185,11 @@ class App(tk.Tk):
             if "/" in reseau_input:
                 #CIDR direct (sous-réseau)
                 net = IPv4Network(reseau_input, strict=False)
+                print(net.is_private)
                 reseau_normalise = str(net.network_address)
                 masque_a_utiliser = str(net.netmask)
             else:
-                if not validation_ip(reseau_input):
+                if not is_ip_valid(reseau_input):
                     raise ValueError("Adresse réseau invalide")
 
                 if masque_input:
@@ -226,8 +199,8 @@ class App(tk.Tk):
                     masque_a_utiliser = masque_norm
                 else:
                     #Masque de classé basé sur l'adresse de réseau
-                    reseau_ip_obj = ip_adress_string(reseau_input)
-                    masque_class = definition_masque(reseau_ip_obj)
+                    reseau_ip_obj = create_ip_address(reseau_input)
+                    masque_class = define_mask_by_ip_class(reseau_ip_obj)
                     if masque_class is None:
                         raise ValueError("Impossible de déduire un masque de classe")
                     masque_a_utiliser = masque_class
