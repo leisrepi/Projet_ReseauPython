@@ -3,11 +3,79 @@
 # --------------------------------------
 
 from ipaddress import IPv4Network, AddressValueError, NetmaskValueError
-from AppException import InvalidMaskException
+from AppException import InvalidMaskException, MaskNotInRangeException
+import re
 
 # --------------------------------------
 #             Fonctions
 # --------------------------------------
+
+# Vérification de la validité du masque.
+def validate_mask_format(mask, *, classful: bool = None):
+    """Vérifie le format d'un masque (classful ou classless ou indifférent)
+
+    Args:
+        mask (string): chaîne de caractères du masque
+        classful (bool, optional): Indique si le masque doit être vérifié en classful (True), classless (False) ou indifférent (None). Par défaut à None.
+
+    Raises:
+        InvalidMaskException : Si le masque est invalide
+        MaskNotInRangeException : Si le masque n'est pas dans les bornes autorisées (/8 à /29 = 255.0.0.0 à 255.255.255.248)
+    """
+
+    # Vérification du format du masque (peut importe si classful ou classless)
+    if(classful is None):
+        if(mask[0] != "/"):
+            mask = "/" + mask
+        try:
+            network = IPv4Network(("0.0.0.0"+mask), strict=False) 
+            if(not network.num_addresses in range(8, 16777217)): # entre /8 et /29
+                raise MaskNotInRangeException("Masque ne se trouve pas entre /8 et /29")
+        except NetmaskValueError:
+            raise InvalidMaskException("Masque invalide")  
+        
+    # Vérification du classful    
+    elif(classful):
+    
+        # Vérification du format du masque (par regex)
+        if(not re.search(r"^((255|254|252|248|240|224|192|128|0)\.){3}(255|254|252|248|240|224|192|128|0)$", mask)):
+            raise InvalidMaskException("Masque invalide")
+        
+        # Vérification des bornes du masque (entre le /8 et le /29)
+        if(mask < "255.0.0.0" or mask > "255.255.255.248"):
+            raise MaskNotInRangeException("Masque ne se trouve pas entre 255.0.0.0 et 255.255.255.248")
+        
+        # Vérification des octets du masque (par exemple refuser 255.0.128.0)
+        mask_parts = [int(part) for part in mask.split(".")]
+        for i in range(4):
+            # S'il s'agit du premier octet, on vérifie s'il est différent de 255 (car 255.0.0.0 est le masque minimal), 
+            # sinon on initialise la variable previous_byte
+            if(i == 0):
+                if(mask_parts[i] != 255):
+                    raise InvalidMaskException("Masque invalide")
+                else:
+                    previous_byte = mask_parts[i]
+                    continue
+            
+            # Pour les octets suivants, on vérifie si l'octet précédent n'est pas égal à 255, 
+            # que l'octet actuel soit égal à 0 (car 255.x.0.x n'est pas valide)
+            if(previous_byte != 255 and mask_parts[i] != 0):
+                raise InvalidMaskException("Masque invalide")
+            
+            previous_byte = mask_parts[i]
+
+    # Vérification du classless
+    else:   
+        if(mask[0] != "/"):
+            raise InvalidMaskException("Masque invalide")
+        try:
+            prefix_length = int(mask[1:])
+            if(prefix_length < 0 or prefix_length > 32):
+                raise InvalidMaskException("Masque invalide")
+            if(prefix_length < 8 or prefix_length > 29):
+                raise MaskNotInRangeException("Masque ne se trouve pas entre /8 et /29")
+        except ValueError:
+            raise InvalidMaskException("Masque invalide")
 
 # Vérification de la validité du masque.
 def is_mask_valid(mask):
@@ -84,3 +152,112 @@ def define_mask_by_ip_class(ip_address):
         return "255.255.255.0"
     else:
         raise InvalidMaskException("L'adresse IP ne peut pas avoir de masque (classe D ou E)")
+    
+# --------------------------------------
+#             Tests
+# --------------------------------------
+
+# # sans spécification
+
+# print(validate_mask_format("255.0.0.0")) # true
+# print(validate_mask_format("/16"))       # true
+# try:
+#     print(validate_mask_format("254.0.0.0")) # false
+# except MaskNotInRangeException as e:
+#     print(e)
+# try:
+#     print(validate_mask_format("255.255.255.252")) # false
+# except MaskNotInRangeException as e:
+#     print(e)
+# try:
+#     print(validate_mask_format("/7")) # false
+# except MaskNotInRangeException as e:
+#     print(e)
+# try:
+#     print(validate_mask_format("/30"))
+# except MaskNotInRangeException as e:
+#     print(e)
+# try:
+#     print(validate_mask_format("255.0.255.0")) # false
+# except InvalidMaskException as e:
+#     print(e)
+# try:
+#     print(validate_mask_format("/33"))       # false
+# except InvalidMaskException as e:
+#     print(e)
+# try:
+#     print(validate_mask_format("255-2102-1")) # false
+# except InvalidMaskException as e:
+#     print(e)
+# try:
+#     print(validate_mask_format("255.0.0.0.0")) # false
+# except InvalidMaskException as e:
+#     print(e)
+# print()
+
+# # classful
+# #print(validate_mask_format("/8", False))
+# try:
+#     print(validate_mask_format("255.0.0.0", classful=True)) # true
+# except InvalidMaskException as e:
+#     print(e)
+# try:
+#     print(validate_mask_format("/16", classful=True))       # false
+# except InvalidMaskException as e:
+#     print(e)
+# try:
+#     print(validate_mask_format("255.0.255.0", classful=True)) # false
+# except InvalidMaskException as e:
+#     print(e)
+# try:
+#     print(validate_mask_format("/33", classful=True))       # false
+# except InvalidMaskException as e:
+#     print(e)
+# try:
+#     print(validate_mask_format("255-2102-1", classful=True)) # false
+# except InvalidMaskException as e:
+#     print(e)
+# try:
+#     print(validate_mask_format("254.0.0.0", classful=True)) # false
+# except MaskNotInRangeException as e:
+#     print(e)
+# try:
+#     print(validate_mask_format("255.255.255.252", classful=True)) # false
+# except MaskNotInRangeException as e:
+#     print(e)
+# try:
+#     print(validate_mask_format("255.0.0.0.0", classful=True)) # false
+# except InvalidMaskException as e:
+#     print(e)
+# print()
+
+# # classless
+# try:
+#     print(validate_mask_format("/16", classful=False)) # true
+# except InvalidMaskException as e:
+#     print(e)
+# try:
+#     print(validate_mask_format("255.0.0.0", classful=False)) # false
+# except InvalidMaskException as e:
+#     print(e)
+# try:
+#     print(validate_mask_format("255.0.255.0", classful=False)) # false
+# except InvalidMaskException as e:
+#     print(e)
+# try:
+#     print(validate_mask_format("/33", classful=False))       # false
+# except InvalidMaskException as e:
+#     print(e)
+# try:
+#     print(validate_mask_format("255-2102-1", classful=False)) # false
+# except InvalidMaskException as e:
+#     print(e)
+# try:
+#     print(validate_mask_format("/7", classful=False)) # false
+# except MaskNotInRangeException as e:
+#     print(e)
+# try:
+#     print(validate_mask_format("/30", classful=False))
+# except MaskNotInRangeException as e:
+#     print(e)
+# print()
