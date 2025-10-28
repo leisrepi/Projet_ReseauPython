@@ -4,6 +4,7 @@
 
 from ipaddress import IPv4Address, AddressValueError
 import AppException
+import math
 from ipaddress import IPv4Address, IPv4Network
 from NetworkHandler import define_mask_by_ip_class
 
@@ -77,7 +78,10 @@ def create_ip_address(ip_string):
     except AddressValueError:
         raise AddressValueError("Adresse IP non valide")
     
-def calculate_max_device_per_subnet(subnetNumber, subnet, mask):
+def calculate_max_host_per_subnet(subnetNumber, subnet, mask):
+    
+    net = IPv4Network(f"{subnet}/{mask}", strict=False)
+    net = net.num_addresses / int(subnetNumber)
+    return net - 2
 
-    number = 0
-    return number
+
