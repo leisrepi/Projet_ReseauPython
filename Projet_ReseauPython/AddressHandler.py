@@ -77,3 +77,7 @@ def create_ip_address(ip_string):
     except AddressValueError:
         raise AddressValueError("Adresse IP non valide")
     
+def calculate_max_device_per_subnet(subnetNumber, subnet, mask):
+
+    number = 0
+    return number
