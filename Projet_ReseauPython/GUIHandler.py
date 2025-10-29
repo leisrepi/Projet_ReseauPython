@@ -1,5 +1,8 @@
 import tkinter as tk
 from tkinter import messagebox, ttk
+import NetworkHandler as nh
+from ipaddress import AddressValueError
+from AppException import InvalidMaskException
 # Constantes de taille de police
 H1_FONT = ("Arial", 24, "bold")
 H2_FONT = ("Arial", 20, "bold")
@@ -120,11 +123,90 @@ class Page1(tk.Frame):
 
 
 class Page2(tk.Frame):
+	def effacer(self):
+		self.ip_var.set("")
+		self.reseau_var.set("")
+		self.masque_var.set("")
+		self._set_status("", ok=None)
+		self._set_details("")
+    
+	def _set_status(self, text, ok: bool | None):
+		#Couleurs simples selon état
+		if ok is True:
+			fg = "#0a7d2b"  # vert
+		elif ok is False:
+			fg = "#b00020" #Rouge
+		else:
+			fg = ""
+		self.result_appartenance.configure(text=text, foreground=fg)
+
+	def _set_details(self, text):
+		self.result_details.configure(state="normal")
+		self.result_details.delete("1.0","end")
+		self.result_details.insert("1.0",text)
+		self.result_details.configure(state="disabled")
+
+	def show_ip_checking_results(self):
+		try:
+			nh.check_ip_network(self)
+		except AddressValueError as e:
+			messagebox.showerror("Erreur", str(e))
+		except InvalidMaskException as e:
+			messagebox.showerror("Erreur", str(e))
+
 	def __init__(self, parent, controller):
 		super().__init__(parent, pady=10)
 		self.controller = controller
 		label = tk.Label(self, text="Page 2", font=H2_FONT)
 		label.pack(pady=10, padx=10)
+
+		#Styles
+		style = ttk.Style(self)
+		# try:
+        #     style.theme_use("clam")
+        # except Exception:
+        #     pass
+
+		pad = {'padx' : 8, 'pady' : 6}
+	
+		frame = ttk.Frame(self)
+		frame.pack(fill="both", expand=True, padx=12, pady=12)
+
+		#Entrées
+		ttk.Label(frame, text="Adresse IP à vérifier :").grid(row=0, column=0, stick="w", **pad)
+		self.ip_var = tk.StringVar()
+		ttk.Entry(frame, textvariable=self.ip_var, width=28).grid(row=0, column=1, sticky="we", **pad)
+
+		ttk.Label(frame, text="Réseau ou sous-réseau :").grid(row=1, column=0, sticky="w", **pad)
+		self.reseau_var = tk.StringVar()
+		ttk.Entry(frame, textvariable=self.reseau_var, width=28).grid(row=1, column=1, sticky="we", **pad)
+		ttk.Label(frame, text="ex: 192.168.3.0 ou 192.168.3.0/26").grid(row=1,column=2, sticky="we",**pad)
+		
+		ttk.Label(frame, text="Masque (optionnel si CIDR) :").grid(row=2, column=0, **pad)
+		self.masque_var = tk.StringVar()
+		ttk.Entry(frame, textvariable=self.masque_var, width=28).grid(row=2, column=1, **pad)
+		ttk.Label(frame, text="ex: 255.255.255.192 ou /26").grid(row=2,column=2,sticky="w")
+
+		#Boutons
+		btns = ttk.Frame(frame)
+		btns.grid(row=3, column=0, columnspan=3, sticky="we",**pad)
+		ttk.Button(btns, text="Vérifier", command=self.show_ip_checking_results).pack(side="left", padx=4)
+		ttk.Button(btns, text="Effacer", command=self.effacer).pack(side="left",padx=4)
+
+		#Résultats
+		sep = ttk.Separator(frame)
+		sep.grid(row=4, column=0, columnspan=3, sticky="we", pady=(10,6))
+
+		self.result_appartenance = ttk.Label(frame, text="",font=("TkDefaultFont",11,"bold"))
+		self.result_appartenance.grid(row=5, column=0, columnspan=3, sticky="w", **pad)
+
+		self.result_details = tk.Text(frame, height=9, width=72, wrap="word")
+		self.result_details.grid(row=6, column=0, columnspan=3, sticky="nsew", **pad)
+		self.result_details.configure(state="disabled")
+
+		#Grille responsive
+		frame.columnconfigure(1, weight=1)
+		frame.rowconfigure(6, weight=1)
 
 class Page3(tk.Frame):
 	def add_to_combobox(self):
