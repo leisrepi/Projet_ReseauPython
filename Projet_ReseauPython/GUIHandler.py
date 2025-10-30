@@ -14,6 +14,22 @@ P2_FONT = ("Arial", 14)
 P3_FONT = ("Arial", 12)
 
 
+def clean_tk_element(element):
+	"""Supprime tous les widgets enfants d'un widget Tkinter.
+
+	Args:
+		element: widget Tkinter (par exemple un tk.Frame) dont on veut vider les enfants.
+
+	Returns:
+		None
+
+	Exemple:
+		clean_tk_element(mon_frame)
+	"""
+	
+	for w in element.winfo_children():
+		w.destroy()
+
 class LoginMenu:
 	def __init__(self, controller):
 		self.controller = controller
@@ -132,7 +148,7 @@ class Page2(tk.Frame):
 		label.pack(pady=10, padx=10)
 
 class Page3(tk.Frame):
-	
+	#TODO : verifier la validité des entrées utilisateur avant de lancer le calcul
 
 	
 	
@@ -159,11 +175,26 @@ class Page3(tk.Frame):
 	def show_number_of_subnets(self, event):
 
 		# On récupère le résultat du contrôleur
+		#TODO : arrondir le nombre de subnet a l'exposant 2 le plus proche (haut)
 		nb_machines_max = self.controller.controller_machine_per_sub_nb(int(self.nb_subnet.get()))
-		tk.messagebox.showinfo("Nombre de sous-réseaux", f"Nombre de machine par sous-réseaux calculés : {nb_machines_max}")
+		response : bool = messagebox.askyesno("Nombre de machines par sous-réseaux", f"Nombre de machine par sous-réseaux calculés : {nb_machines_max}")
+		if response:
+			print("user said yes")
+			self.init_nb_machines_inputs(int(self.nb_subnet.get()))
+			pass
 		#nb_subnets = len(result)
 		#self.nb_subnet.delete(0, tk.END)
 		#self.nb_subnet.insert(0, str(nb_subnets))
+	def init_nb_machines_inputs(self, nb_subnets):
+		#TODO : créer dynamiquement les inputs pour le nombre de machines par sous-réseaux
+		clean_tk_element(self.nb_machine_inputs_container)
+		self.nb_machine_inputs = []
+		for i in range(nb_subnets):
+			tk.Label(self.nb_machine_inputs_container, text=f"Nombre de machines pour le sous-réseau {i+1}:", font=P2_FONT).grid(row=i, column=0, padx=5, pady=5, sticky="e")
+			entry = tk.Entry(self.nb_machine_inputs_container, font=P2_FONT, width=20)
+			entry.grid(row=i, column=1, padx=5, pady=5)
+			self.nb_machine_inputs.append(entry)
+		pass
 			
 	def __init__(self , parent, controller : 'GUIController.GUIController'):
 
@@ -196,7 +227,11 @@ class Page3(tk.Frame):
 		self.nb_subnet.grid(row=3, column=1, columnspan=2, padx=5, pady=5, sticky="w")
 		self.nb_subnet.insert(0,"16") #TODO retirer la valeur par defaut
 
-		tk.Button(self, text="Calculer la découpe", command=self.show_subnetting_result, font=P2_FONT, borderwidth=1, relief="solid").grid(row=8, column=0, padx=5, pady=5)
+		tk.Button(self, text="Calculer la découpe", command=self.show_subnetting_result, font=P2_FONT, borderwidth=1, relief="solid").grid(row=4, column=0, padx=5, pady=5)
+
+		# container des inputs dynamiques pour le nombre de machines par sous-réseaux
+		self.nb_machine_inputs_container = tk.Frame(self)
+		self.nb_machine_inputs_container.grid(row=5, column=0, columnspan=3, padx=5, pady=5)
 
 		#-----------------------------------------------------------------------------------------------
 
