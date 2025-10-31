@@ -60,8 +60,8 @@ def verify_subnetting_possibility(network, nb_machines_list):
         Returns: 
             true si une découpe classique est possible, false sinon
     """
-    print("Decoupe classique possible ?:",(network.num_addresses)/len(nb_machines_list), ">=", _calculate_nb_hosts_max(nb_machines_list))
-    return (network.num_addresses)/len(nb_machines_list) >= _calculate_nb_hosts_max(nb_machines_list)
+    print("Decoupe classique possible ?:",(network.num_addresses)/len(nb_machines_list), ">=", calculate_nb_hosts_max(nb_machines_list))
+    return (network.num_addresses)/len(nb_machines_list) >= calculate_nb_hosts_max(nb_machines_list)
 
 # Vérification de la possibilité de faire une découpe VLSM
 def verify_vlsm_possibility(network, nb_machines_list):
@@ -100,7 +100,7 @@ def calculate_subnetting(network, nb_machines_list):
     if(not verify_subnetting_possibility(network, nb_machines_list)):
         raise ValueError("Découpe classique impossible avec les paramètres fournis.")
         
-    nb_machines = _calculate_nb_hosts_max(nb_machines_list)
+    nb_machines = calculate_nb_hosts_max(nb_machines_list)
     nb_subnet = len(nb_machines_list)
 
     # Liste des hôtes et du nombre d'adresses pour éviter de recalculer à chaque itération
