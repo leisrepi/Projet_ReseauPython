@@ -11,20 +11,21 @@ from AppException import TooManyMachinesException
 # --------------------------------------
                    
 # Calcul du nombre de machines maximum sur une liste de machines données(par exposant de 2)
-def calculate_nb_machines_max(nb_machines_list):
+#TODO : changer machines en hosts dans le nom de la fonction et ses appels
+def _calculate_nb_hosts_max(nb_hosts_list):
 # log2 exemple : log2(32) = 5 car 2^5 = 32
 # ceil arrondi à l'entier supérieur donc si log2 = 4.1 -> 5
 # puis 2^5 donnera l'exposant nécessaire pour le nombre d'hôtes par sous-réseau
 # + 2 pour l'adresse de réseau et de diffusion
-    """Calcule et renvoie le nombre de machines maximum sur une liste de machines données(par exposant de 2)
-
+    """
+        Calcule et renvoie le nombre d'hôtes maximum sur une liste de hôtes données afin de connaitre le nombre d'hôtes nécessaire par sous-réseau
         Args:
-            nb_machines_list (list[int]) : liste du nombre de machines par sous-réseau
+            nb_hosts_list (list[int]) : liste du nombre de hôtes par sous-réseau
 
         Returns:
-            return (int) : Renvoie un entier correspondant au nombre de machines maximum        
+            return (int) : Renvoie un entier correspondant au nombre de hôtes maximum        
     """
-    return 2 ** ceil(log2(max(nb_machines_list) + 2))
+    return 2 ** ceil(log2(max(nb_hosts_list) + 2))
    
 # Calcul du pas.
 def calculate_step(nb_machines):
@@ -59,8 +60,8 @@ def verify_subnetting_possibility(network, nb_machines_list):
         Returns: 
             true si une découpe classique est possible, false sinon
     """
-    print("Decoupe classique possible ?:",(network.num_addresses)/len(nb_machines_list), ">=", calculate_nb_machines_max(nb_machines_list))
-    return (network.num_addresses)/len(nb_machines_list) >= calculate_nb_machines_max(nb_machines_list)
+    print("Decoupe classique possible ?:",(network.num_addresses)/len(nb_machines_list), ">=", _calculate_nb_hosts_max(nb_machines_list))
+    return (network.num_addresses)/len(nb_machines_list) >= _calculate_nb_hosts_max(nb_machines_list)
 
 # Vérification de la possibilité de faire une découpe VLSM
 def verify_vlsm_possibility(network, nb_machines_list):
@@ -99,7 +100,7 @@ def calculate_subnetting(network, nb_machines_list):
     if(not verify_subnetting_possibility(network, nb_machines_list)):
         raise ValueError("Découpe classique impossible avec les paramètres fournis.")
         
-    nb_machines = calculate_nb_machines_max(nb_machines_list)
+    nb_machines = _calculate_nb_hosts_max(nb_machines_list)
     nb_subnet = len(nb_machines_list)
 
     # Liste des hôtes et du nombre d'adresses pour éviter de recalculer à chaque itération
