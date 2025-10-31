@@ -76,4 +76,10 @@ def create_ip_address(ip_string):
         return IPv4Address(ip_string)
     except AddressValueError:
         raise AddressValueError("Adresse IP non valide")
+  
     
+def calculate_max_host_per_subnet(subnetNumber, subnet, mask):
+    
+    net = IPv4Network(f"{subnet}/{mask}", strict=False)
+    net = net.num_addresses / int(subnetNumber)
+    return net - 2
