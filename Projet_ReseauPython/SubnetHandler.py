@@ -12,7 +12,7 @@ from AppException import TooManyMachinesException
                    
 # Calcul du nombre de machines maximum sur une liste de machines données(par exposant de 2)
 #TODO : changer machines en hosts dans le nom de la fonction et ses appels
-def _calculate_nb_hosts_max(nb_hosts_list):
+def calculate_nb_hosts_max(nb_hosts_list):
 # log2 exemple : log2(32) = 5 car 2^5 = 32
 # ceil arrondi à l'entier supérieur donc si log2 = 4.1 -> 5
 # puis 2^5 donnera l'exposant nécessaire pour le nombre d'hôtes par sous-réseau
