@@ -1,5 +1,7 @@
 import tkinter as tk
 from tkinter import messagebox, ttk
+from AppException import InvalidMaskException, MaskNotInRangeException
+from ipaddress import AddressValueError
 # Constantes de taille de police
 H1_FONT = ("Arial", 24, "bold")
 H2_FONT = ("Arial", 20, "bold")
@@ -44,81 +46,74 @@ class LoginMenu:
 
 
 class Page1(tk.Frame):
+	def show_address_info(self):
+		self.network_label.config(text="")
+		self.network_broadcast_label.config(text="")
+		self.subnetwork_label.config(text="")
+		self.subnetwork_broadcast_label.config(text="")
+
+		try:
+			network_addr, network_broadcast, subnet_addr, subnet_broadcast = self.controller.controller_get_address_info(self.ip_entry.get(), self.mask_entry.get())
+		except InvalidMaskException as e:
+			messagebox.showerror("Erreur", str(e))
+			return
+		except AddressValueError as e:
+			messagebox.showerror("Erreur", str(e))
+			return
+		except MaskNotInRangeException as e:
+			messagebox.showerror("Erreur", str(e))
+			return
+		
+		self.network_label.config(text=str(network_addr))
+		self.network_broadcast_label.config(text=str(network_broadcast))
+		if(subnet_addr is None and subnet_broadcast is None):
+			return
+		self.subnetwork_label.config(text=str(subnet_addr))
+		self.subnetwork_broadcast_label.config(text=str(subnet_broadcast))
+	
 	def __init__(self, parent, controller):
 		super().__init__(parent, pady=10)
 		self.controller = controller
-		label = tk.Label(self, text="Calcul réseau", font=H2_FONT)
+		label = tk.Label(self, text="Informations d'une adresse", font=H2_FONT)
 		label.grid(row=0, column=0, columnspan=2 , padx=5, pady=5)
 
+		#--------------------------------------
+		# Adresse IP
+		tk.Label(self, text="Adresse IP:", font=P2_FONT).grid(row=1, column=0, padx=5, pady=5, sticky="e")
+		self.ip_entry = tk.Entry(self, font=P2_FONT, width=20)
+		self.ip_entry.grid(row=1, column=1, padx=5, pady=5)
 		
+		# Masque
+		tk.Label(self, text="Masque:", font=P2_FONT).grid(row=1, column=2, padx=5, pady=5, sticky="e")
+		self.mask_entry = tk.Entry(self, font=P2_FONT, width=20)
+		self.mask_entry.grid(row=1, column=3, padx=5, pady=5)
 
-
-		#--------------------------------------|Point 1 (gauche)|--------------------------------------
-		framePoint1 = tk.Frame(self)
-		framePoint1.grid(row=1, column=0, padx=5, pady=5)
+		tk.Button(self, text="Obtenir les informations de l'adresse", command=self.show_address_info, font=P2_FONT, borderwidth=1, relief="solid").grid(row=1, column=4, padx=5, pady=5)
 		#--------------------------------------
-		#IPV4
-		tk.Label(framePoint1, text="Adresse IP:", font=P2_FONT).grid(row=0, column=0, padx=5, pady=5, sticky="e")
-		self.ip_entry = tk.Entry(framePoint1, font=P2_FONT, width=20)
-		self.ip_entry.grid(row=0, column=1, padx=5, pady=5)
+		# Résultats
+
+		# Address du réseau
+		tk.Label(self, text="Adresse du réseau:", font=P2_FONT).grid(row=2, column=0, padx=5, pady=5, sticky="e")
+		self.network_label = tk.Label(self, font=P2_FONT, width=20)
+		self.network_label.grid(row=2, column=1, padx=5, pady=5)
+
+		# Adresse du sous-réseau
+		tk.Label(self, text="Adresse du sous-réseau:", font=P2_FONT).grid(row=2, column=2, padx=5, pady=5, sticky="e")
+		self.subnetwork_label = tk.Label(self, font=P2_FONT, width=20)
+		self.subnetwork_label.grid(row=2, column=3, padx=5, pady=5)
+
+		# Broadcast du réseau
+		tk.Label(self, text="Broadcast du réseau:", font=P2_FONT).grid(row=3, column=0, padx=5, pady=5, sticky="e")
+		self.network_broadcast_label = tk.Label(self, font=P2_FONT, width=20)
+		self.network_broadcast_label.grid(row=3, column=1, padx=5, pady=5)
+
+		# Broadcast du sous-réseau
+		tk.Label(self, text="Broadcast du sous-réseau:", font=P2_FONT).grid(row=3, column=2, padx=5, pady=5, sticky="e")
+		self.subnetwork_broadcast_label = tk.Label(self, font=P2_FONT, width=20)
+		self.subnetwork_broadcast_label.grid(row=3, column=3, padx=5, pady=5)
+
+
 		
-		#MASK
-		tk.Label(framePoint1, text="Masque:", font=P2_FONT).grid(row=0, column=2, padx=5, pady=5, sticky="e")
-		self.mask_entry = tk.Entry(framePoint1, font=P2_FONT, width=20)
-		self.mask_entry.grid(row=0, column=3, padx=5, pady=5)
-
-		#--------------------------------------
-		#Output Adresse reseau
-		tk.Label(framePoint1, text="Adresse Reseau:", font=P2_FONT).grid(row=1, column=0, padx=5, pady=5, sticky="e")
-		self.network_output= tk.Entry(framePoint1, font=P2_FONT, width=20, state="readonly")
-		self.network_output.grid(row=1, column=1, padx=5, pady=5)
-		#Output Adresse broadcast
-		tk.Label(framePoint1, text="Adresse Broadcast:", font=P2_FONT).grid(row=1, column=2, padx=5, pady=5, sticky="e")
-		self.broadcast_output= tk.Entry(framePoint1, font=P2_FONT, width=20, state="readonly")
-		self.broadcast_output.grid(row=1, column=3, padx=5, pady=5)
-
-		#--------------------------------------
-		#Output adresse sous reseau
-		tk.Label(framePoint1, text="Adresse Sous-Réseau:", font=P2_FONT).grid(row=2, column=0, padx=5, pady=5, sticky="e")
-		self.subnet_output= tk.Entry(framePoint1, font=P2_FONT, width=20, state="readonly")
-		self.subnet_output.grid(row=2, column=1, padx=5, pady=5)
-		#Output Adresse broadcast sous reseau
-		tk.Label(framePoint1, text="Adresse Broadcast Sous-Réseau:", font=P2_FONT).grid(row=2, column=2, padx=5, pady=5, sticky="e")
-		self.subnet_broadcast_output= tk.Entry(framePoint1, font=P2_FONT, width=20, state="readonly")
-		self.subnet_broadcast_output.grid(row=2, column=3, padx=5, pady=5)
-
-
-		#--------------------------------------|Point 2 (droite)|--------------------------------------
-		framePoint2 = tk.Frame(self)
-		framePoint2.grid(row=1, column=1, padx=5, pady=5)
-		#--------------------------------------
-		#IPV4
-		tk.Label(framePoint2, text="Adresse IP:", font=P2_FONT).grid(row=0, column=0, padx=5, pady=5, sticky="e")
-		self.ip_entry2 = tk.Entry(framePoint2, font=P2_FONT, width=20)
-		self.ip_entry2.grid(row=0, column=1, padx=5, pady=5)
-		#Adresse reseau
-		tk.Label(framePoint2, text="Adresse Reseau:", font=P2_FONT).grid(row=0, column=2, padx=5, pady=5, sticky="e")
-		self.network_output2= tk.Entry(framePoint2, font=P2_FONT, width=20, state="readonly")
-		self.network_output2.grid(row=0, column=3, padx=5, pady=5)
-		#--------------------------------------
-		#Output 1ere adresse réseau/sous réseau
-		tk.Label(framePoint2, text="1ère Adresse Utilisable:", font=P2_FONT).grid(row=1, column=0, padx=5, pady=5, sticky="e")
-		self.first_usable_output= tk.Entry(framePoint2, font=P2_FONT, width=20, state="readonly")
-		self.first_usable_output.grid(row=1, column=1, padx=5, pady=5)
-		#Output Derniere adresse réseau/sous réseau
-		tk.Label(framePoint2, text="Dernière Adresse Utilisable:", font=P2_FONT).grid(row=1, column=2, padx=5, pady=5, sticky="e")
-		self.last_usable_output= tk.Entry(framePoint2, font=P2_FONT, width=20, state="readonly")
-		self.last_usable_output.grid(row=1, column=3, padx=5, pady=5)
-		#---------------------------------------
-		#Bare appartien au réseau ?
-		self.belongs_output = tk.Label(framePoint2,
-		    text="L'adresse IP appartient-elle au réseau ?",
-			font=P2_FONT,
-			background="lightgrey"
-			).grid(row=2, column=0, columnspan=4, padx=5, pady=5, sticky="e")
-		
-
-
 class Page2(tk.Frame):
 	def __init__(self, parent, controller):
 		super().__init__(parent, pady=10)
@@ -131,8 +126,6 @@ class Page3(tk.Frame):
 			if(self.list_machines_entry.get() == ""):
 				messagebox.showwarning("Attention", "Veuillez entrer un nombre de machines avant d'ajouter.")
 				return
-			
-			print(self.subnetting_choice.get())
 
 			if((not self.list_machines_entry.get().isnumeric())):
 				messagebox.showwarning("Attention", "Veuillez entrer un nombre valide.")
