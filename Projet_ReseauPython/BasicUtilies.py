@@ -8,3 +8,4 @@ def to_float(s: str):
         return float(s)
     except ValueError:
         return None
+    

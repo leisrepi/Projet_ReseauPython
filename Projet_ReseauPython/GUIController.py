@@ -5,11 +5,13 @@ import DBHandler
 import time
 import threading
 #TODO : importer le import au complet vue que on ce sert de toutes les fonctions
+import AppException
 from SubnetHandler import calculate_subnetting, calculate_step, calculate_nb_machines_max
 import SubnetHandler
 import AddressHandler
 from NetworkHandler import create_network
 from ipaddress import NetmaskValueError, AddressValueError
+import NetworkHandler
 
 import BasicUtilies as bu
 import tkinter.messagebox as msg
@@ -192,7 +194,11 @@ class GUIController:
             return None
         
         #verification du mask
-        
+        try:
+            NetworkHandler.validate_mask_format(mask)
+        except Exception as e:
+            msg.showerror("Erreur", str(e))
+            return None
 
         #TODO : hardcoder
         page3.init_nb_machines_inputs(16, nb_subnet)

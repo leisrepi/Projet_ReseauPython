@@ -1,6 +1,7 @@
 import GUIController
 import AuthHandler
 import DBHandler
+import NetworkHandler
 
 #Important ! permet au sous processus "_sign_process" de "AuthHandler" de se lancer correctement sous Windows
 if (__name__ == "__main__"):
@@ -8,7 +9,6 @@ if (__name__ == "__main__"):
   
 
     #GUIHandlerOld.init_GUI()
-    
 
     DBHandler.create_db()
     #DBHandler.insert_user("test", "test")
