@@ -287,7 +287,7 @@ class Page3(tk.Frame):
 		# Nombre de sous-réseaux
 		tk.Label(self, text="Nombre de sous-réseau:", font=P2_FONT).grid(row=3, column=0, padx=5, pady=5, sticky="e")
 		self.nb_subnet = tk.Entry(self, font=P2_FONT, width=20)
-		self.nb_subnet.bind("<Return>", self.show_number_of_subnets)
+		self.nb_subnet.bind("<Return>",lambda x : self.controller.controller_create_number_of_subnets_input(self,self.nb_subnet.get(),self.network_entry.get(),self.mask_entry.get()))# .show_number_of_subnets)
 		self.nb_subnet.grid(row=3, column=1, columnspan=2, padx=5, pady=5, sticky="w")
 		self.nb_subnet.insert(0,"16") #TODO retirer la valeur par defaut
 
