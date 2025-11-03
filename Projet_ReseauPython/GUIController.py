@@ -7,6 +7,7 @@ import threading
 #TODO : importer le import au complet vue que on ce sert de toutes les fonctions
 from SubnetHandler import calculate_subnetting, calculate_step, calculate_nb_machines_max
 import SubnetHandler
+import AddressHandler
 from NetworkHandler import create_network
 from ipaddress import NetmaskValueError, AddressValueError
 
@@ -152,9 +153,9 @@ class GUIController:
         list_nb_machines = list(map(int, combobox_list[1:]))
         return calculate_subnetting(network, list_nb_machines), calculate_step(calculate_nb_machines_max(list_nb_machines)), network.num_addresses - 2
 
-    def controller_machine_per_sub_nb(self, nb_subnet):
+    def controller_machine_per_sub_nb(self, nb_subnet, subnet, mask):
         #13 suposont 16 ->
-        return 13 #TODO faire la fonction qui renvera le nombre max de machine par sous réseau
+        return AddressHandler.calculate_max_host_per_subnet(nb_subnet, subnet, mask)
 
 '''
 if __name__ == "__main__":

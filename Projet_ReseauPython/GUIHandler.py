@@ -63,6 +63,55 @@ class LoginMenu:
 		self.controller.on_login(pseudonyme, password)
 
 
+class ScrollableFrame(ttk.Frame):
+    def __init__(self, parent, *args, **kwargs):
+        super().__init__(parent, *args, **kwargs)
+
+        # 1. Canvas + Scrollbar verticale
+        self.canvas = tk.Canvas(self, highlightthickness=0)
+        self.v_scrollbar = ttk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
+
+        self.canvas.configure(yscrollcommand=self.v_scrollbar.set)
+
+        self.v_scrollbar.pack(side="right", fill="y")
+        self.canvas.pack(side="left", fill="both", expand=True)
+
+        # 2. Frame interne qui contiendra TON contenu
+        self.inner = ttk.Frame(self.canvas)
+        self.inner_id = self.canvas.create_window((0, 0), window=self.inner, anchor="nw")
+
+        # 3. Ajuster automatiquement la zone scrollable quand le contenu change de taille
+        self.inner.bind("<Configure>", self._on_frame_configure)
+
+        # 4. Ajuster la largeur du frame interne quand le canvas change de taille (responsive)
+        self.canvas.bind("<Configure>", self._on_canvas_configure)
+
+        # 5. Molette souris (Windows/Linux). Pour macOS on adapte un tout petit peu.
+        self.canvas.bind_all("<MouseWheel>", self._on_mousewheel)        # Windows / Linux
+        self.canvas.bind_all("<Button-4>", self._on_mousewheel_linux)    # Linux old
+        self.canvas.bind_all("<Button-5>", self._on_mousewheel_linux)    # Linux old
+
+    def _on_frame_configure(self, event):
+        # Met à jour la scrollregion = la zone totale scrollable
+        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+
+    def _on_canvas_configure(self, event):
+        # Force la largeur de inner à suivre la largeur visible du canvas (sinon ça fait une 2e scrollbar horizontale moche)
+        canvas_width = event.width
+        self.canvas.itemconfig(self.inner_id, width=canvas_width)
+
+    def _on_mousewheel(self, event):
+        # delta est négatif quand tu scrolles vers le bas
+        # Sur Windows : event.delta est par pas de 120
+        # Sur X11 récent : pareil mais parfois différent, on normalise un peu
+        self.canvas.yview_scroll(int(-event.delta / 120), "units")
+
+    def _on_mousewheel_linux(self, event):
+        # Ancien bindings Linux (<Button-4>/<Button-5>)
+        if event.num == 4:
+            self.canvas.yview_scroll(-1, "units")
+        elif event.num == 5:
+            self.canvas.yview_scroll(1, "units")
 
 class Page1(tk.Frame):
 	def __init__(self, parent, controller):
@@ -149,7 +198,7 @@ class Page2(tk.Frame):
 
 class Page3(tk.Frame):
 	#TODO : verifier la validité des entrées utilisateur avant de lancer le calcul
-
+	#TODO : bouton pour mettre les champs (non remplis) nb_machines a 0 (si on voulais 13 réseau, 16 serons crée )
 	
 	
 	def show_subnetting_result(self):
@@ -176,23 +225,28 @@ class Page3(tk.Frame):
 
 		# On récupère le résultat du contrôleur
 		#TODO : arrondir le nombre de subnet a l'exposant 2 le plus proche (haut)
-		nb_machines_max = self.controller.controller_machine_per_sub_nb(int(self.nb_subnet.get()))
+		#TODO : verifier les entrers utilisateur
+		
+		nb_reseau_voulu : int = int(self.nb_subnet.get())
+		nb_reseau : int = 16 #TODO hardcoder pour les test
+		nb_machines_max : int = int(self.controller.controller_machine_per_sub_nb(int(self.nb_subnet.get()), self.network_entry.get(), self.mask_entry.get()))
 		response : bool = messagebox.askyesno("Nombre de machines par sous-réseaux", f"Nombre de machine par sous-réseaux calculés : {nb_machines_max}")
 		if response:
 			print("user said yes")
-			self.init_nb_machines_inputs(int(self.nb_subnet.get()))
+			self.init_nb_machines_inputs(nb_reseau,nb_reseau_voulu)
 			pass
 		#nb_subnets = len(result)
 		#self.nb_subnet.delete(0, tk.END)
 		#self.nb_subnet.insert(0, str(nb_subnets))
-	def init_nb_machines_inputs(self, nb_subnets):
-		#TODO : créer dynamiquement les inputs pour le nombre de machines par sous-réseaux
-		clean_tk_element(self.nb_machine_inputs_container)
+	def init_nb_machines_inputs(self, nb_subnets, nb_subnets_voulu):
+		clean_tk_element(self.nb_machine_inputs_container.inner)
 		self.nb_machine_inputs = []
 		for i in range(nb_subnets):
-			tk.Label(self.nb_machine_inputs_container, text=f"Nombre de machines pour le sous-réseau {i+1}:", font=P2_FONT).grid(row=i, column=0, padx=5, pady=5, sticky="e")
-			entry = tk.Entry(self.nb_machine_inputs_container, font=P2_FONT, width=20)
+			tk.Label(self.nb_machine_inputs_container.inner, text=f"Nb machine sous-réseau ({i+1}):", font=P2_FONT).grid(row=i, column=0, padx=5, pady=5, sticky="e")
+			entry = tk.Entry(self.nb_machine_inputs_container.inner, font=P2_FONT, width=20)
 			entry.grid(row=i, column=1, padx=5, pady=5)
+			if i >= nb_subnets_voulu:
+				entry.insert(0,"0") #TODO retirer la valeur par defaut
 			self.nb_machine_inputs.append(entry)
 		pass
 			
@@ -230,8 +284,10 @@ class Page3(tk.Frame):
 		tk.Button(self, text="Calculer la découpe", command=self.show_subnetting_result, font=P2_FONT, borderwidth=1, relief="solid").grid(row=4, column=0, padx=5, pady=5)
 
 		# container des inputs dynamiques pour le nombre de machines par sous-réseaux
-		self.nb_machine_inputs_container = tk.Frame(self)
+		self.nb_machine_inputs_container = ScrollableFrame(self)
 		self.nb_machine_inputs_container.grid(row=5, column=0, columnspan=3, padx=5, pady=5)
+		self.nb_machine_inputs_container.config(height=300,width=500)  # Hauteur fixe pour le conteneur scrollable
+		#self.nb_machine_inputs_container.grid_propagate(False)
 
 		#-----------------------------------------------------------------------------------------------
 
@@ -285,7 +341,6 @@ class MainApp:
 		self.root = controller.root
 		self.root.title("Application Principale")
 		self.root.geometry(str(self.root.winfo_screenwidth())+"x"+str(self.root.winfo_screenheight()))
-
 		# Frame pour le label de bienvenue
 		header_frame = tk.Frame(self.root)
 		header_frame.grid(row=0, column=0, columnspan=2, sticky="ew")
