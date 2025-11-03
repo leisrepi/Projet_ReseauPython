@@ -4,9 +4,10 @@ import AuthHandler
 import DBHandler  
 import time
 import threading
-from SubnetHandler import calculate_subnetting, calculate_step, calculate_nb_machines_max
-from NetworkHandler import create_network
-from ipaddress import NetmaskValueError, AddressValueError
+from SubnetHandler import calculate_subnetting, calculate_step, calculate_nb_hosts_max
+from NetworkHandler import create_network, define_mask_by_ip_class, validate_mask_format
+from ipaddress import AddressValueError
+from AppException import InvalidMaskException, MaskNotInRangeException
 
 
 class GUIController:
@@ -127,7 +128,7 @@ class GUIController:
             self.disconnect()
             return
         time_left = self.session.session_expiration_time - time.time()
-        if time_left <= 5:
+        if time_left <= 115:
             self.session = AuthHandler.refresh_session(self.session)
             print("refreshed")
     #TODO : vérifier les entrées utilisateur avant de lancer le calcul (si elles ne sont pas vides et sont valides)
@@ -135,7 +136,7 @@ class GUIController:
     def controller_subnetting_calculation(self, page3):
         try:
             network = create_network(page3.network_entry.get(), page3.mask_entry.get())
-        except NetmaskValueError as e:
+        except InvalidMaskException as e:
             tk.messagebox.showerror("Erreur", f"Erreur lors de la création du réseau : {e}")
             return
         except AddressValueError as e:
@@ -148,9 +149,47 @@ class GUIController:
             return
         # On ignore le premier élément qui est une chaîne vide
         list_nb_machines = list(map(int, combobox_list[1:]))
-        return calculate_subnetting(network, list_nb_machines), calculate_step(calculate_nb_machines_max(list_nb_machines)), network.num_addresses - 2
+        return calculate_subnetting(network, list_nb_machines), calculate_step(calculate_nb_hosts_max(list_nb_machines)), network.num_addresses - 2
+    
+    # def controller_get_address_info(self, ip, mask):
+    #     try:
+    #         network = create_network(ip, mask)
+    #     except AddressValueError:
+    #         raise AddressValueError("Adresse IP non valide")
+    #     except InvalidMaskException:
+    #         raise InvalidMaskException("Masque invalide")
+        
+    #     return network.network_address, network.broadcast_address
 
+    # dans le cas où l'adresse est en classfull
+    def controller_get_address_info(self, ip, mask):
+        try:
+            validate_mask_format(mask)
+            subnet = create_network(ip, mask)
+        except AddressValueError as e:
+            raise AddressValueError(str(e))
+        except InvalidMaskException as e:
+            raise InvalidMaskException(str(e))
+        except MaskNotInRangeException as e:
+            raise MaskNotInRangeException(str(e))
+        
+        mask = mask.strip()
+        if(mask[0] == "/"):
+            return subnet.network_address, subnet.broadcast_address, None, None
+        
+        classfull_mask = define_mask_by_ip_class(subnet.network_address)
+        
+        if(classfull_mask is None or str(subnet.netmask) < classfull_mask):
+            raise InvalidMaskException("Masque invalide pour cette adresse IP")
 
+        print("classfull mask : ", classfull_mask)
+        print("subnet mask : ", str(subnet.netmask))
+        if(str(subnet.netmask) == classfull_mask):
+            return subnet.network_address, subnet.broadcast_address, None, None
+        
+        network = create_network(ip, classfull_mask)
+        return network.network_address, network.broadcast_address, subnet.network_address, subnet.broadcast_address 
+    
 '''
 if __name__ == "__main__":
     controller = GUIController()
