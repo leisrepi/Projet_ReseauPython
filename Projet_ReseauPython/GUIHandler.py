@@ -1,4 +1,5 @@
 import tkinter as tk
+import BasicUtilies as bu
 from tkinter import messagebox, ttk
 
 from typing import TYPE_CHECKING #pour avoir la docu sans import du module a l'execution (car pas besoin et importation circulaire)
@@ -221,12 +222,21 @@ class Page3(tk.Frame):
 				self.tree.insert('', 'end', values=ligne)
 			i += 1
 	
+	def verify_nb_subnet_inputs(self):
+		
+		nb : int = bu.to_int(self.nb_subnet.get())
+		if nb is None or nb <= 0 or nb > 128:
+			messagebox.showerror("Erreur", "Le nombre de sous-réseaux doit être positif et inférieur ou égal à 128.")
+			return False
+		return True
+
 	def show_number_of_subnets(self, event):
 
 		# On récupère le résultat du contrôleur
 		#TODO : arrondir le nombre de subnet a l'exposant 2 le plus proche (haut)
 		#TODO : verifier les entrers utilisateur
-		
+		if not self.verify_nb_subnet_inputs():
+			return
 		nb_reseau_voulu : int = int(self.nb_subnet.get())
 		nb_reseau : int = 16 #TODO hardcoder pour les test
 		nb_machines_max : int = int(self.controller.controller_machine_per_sub_nb(int(self.nb_subnet.get()), self.network_entry.get(), self.mask_entry.get()))
