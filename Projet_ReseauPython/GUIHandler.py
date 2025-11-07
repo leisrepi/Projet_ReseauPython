@@ -273,7 +273,10 @@ class Page3(tk.Frame):
 				#self.nb_machine_inputs[i].destroy() #detruit l'element tk
 			self.nb_machine_inputs = self.nb_machine_inputs[:nb_subnets] #retire les references
 	
-			
+	#TODO : manque de clareté, ne parle que d'une parti des champs, pas tous.	
+	def _apply_changes_from_inputs_of_group1(self):
+		self.controller.controller_create_number_of_subnets_input(self,self.nb_subnet.get(),self.network_entry.get(),self.mask_entry.get())
+
 	def __init__(self , parent, controller : 'GUIController.GUIController'):
 
 				
@@ -285,15 +288,18 @@ class Page3(tk.Frame):
 		
 		
 		# #-----------------------------------------------------------------------------------------------
+		# ============== Inputs groupe 1 ==================
 		# Adresse réseau
 		tk.Label(self, text="Adresse réseau:", font=P2_FONT).grid(row=1, column=0, padx=5, pady=5, sticky="e")
 		self.network_entry = tk.Entry(self, font=P2_FONT, width=20)
+		self.network_entry.bind("<Return>",lambda x : self._apply_changes_from_inputs_of_group1())
 		self.network_entry.grid(row=1, column=1, columnspan=2, padx=5, pady=5)
 		self.network_entry.insert(0,"192.168.1.0") #TODO retirer la valeur par defaut
 
 		# Masque
 		tk.Label(self, text="Masque:", font=P2_FONT).grid(row=2, column=0, padx=5, pady=5, sticky="e")
 		self.mask_entry = tk.Entry(self, font=P2_FONT, width=20)
+		self.mask_entry.bind("<Return>",lambda x : self._apply_changes_from_inputs_of_group1())
 		self.mask_entry.grid(row=2, column=1, columnspan=2, padx=5, pady=5)
 		self.mask_entry.insert(0,"/24") #TODO retirer la valeur par defaut
 		
@@ -302,7 +308,7 @@ class Page3(tk.Frame):
 		# Nombre de sous-réseaux
 		tk.Label(self, text="Nombre de sous-réseau:", font=P2_FONT).grid(row=3, column=0, padx=5, pady=5, sticky="e")
 		self.nb_subnet = tk.Entry(self, font=P2_FONT, width=20)
-		self.nb_subnet.bind("<Return>",lambda x : self.controller.controller_create_number_of_subnets_input(self,self.nb_subnet.get(),self.network_entry.get(),self.mask_entry.get()))# .show_number_of_subnets)
+		self.nb_subnet.bind("<Return>",lambda x : self._apply_changes_from_inputs_of_group1())
 		self.nb_subnet.grid(row=3, column=1, columnspan=2, padx=5, pady=5, sticky="w")
 		self.nb_subnet.insert(0,"16") #TODO retirer la valeur par defaut
 
