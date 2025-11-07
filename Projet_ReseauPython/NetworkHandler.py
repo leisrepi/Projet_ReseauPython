@@ -22,7 +22,7 @@ def validate_mask_format(mask, *, classful: bool = None):
         InvalidMaskException : Si le masque est invalide
         MaskNotInRangeException : Si le masque n'est pas dans les bornes autorisées (/8 à /29 = 255.0.0.0 à 255.255.255.248)
     """
-
+    mask = mask.strip()
     # Vérification du format du masque (peut importe si classful ou classless)
     if(classful is None):
         if(mask[0] != "/"):
@@ -114,19 +114,19 @@ def create_network(address, mask):
             return (IPv4Network) : Renvoie une instance de IPv4Network
 
         Raises:
-            NetmaskValueError : si le masque n'est pas valide
+            InvalidMaskException : si le masque n'est pas valide
             AddressValueError : si l'adresse IP n'est pas valide
     """ 
     if(not is_mask_valid(mask)):
-        raise NetmaskValueError("Masque non valide ou vide")
+        raise InvalidMaskException("Masque non valide ou vide")
     if(mask[0] != "/"):
         mask = "/" + mask
     try:   
-        return IPv4Network((address + mask), strict=False)
+        return IPv4Network((address.strip() + mask.strip()), strict=False)
     except AddressValueError:
         raise AddressValueError("Adresse IP non valide")
     except NetmaskValueError:
-        raise NetmaskValueError("Masque non valide")
+        raise InvalidMaskException("Masque non valide")
 
 # Définition du masque en fonction de la classe d'adresse IP classfull (renvoie None si l'adresse ne peut pas avoir de masque)
 def define_mask_by_ip_class(ip_address):
