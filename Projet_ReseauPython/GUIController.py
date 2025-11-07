@@ -220,6 +220,7 @@ class GUIController:
         # faire en sorte que quand l'utilisateur appuer sur "return" sur un champs, sa le verifie et passe au suivant si correct
         page3.nb_machines_per_subnet_label["text"] = "Nombre maximum de machines par sous-réseaux: " + str(max_machine_per_subnet)
         page3.nb_subnets_label["text"] = "Nombre de sous-réseaux créés: " + str(real_nb_subnet)
+        page3._verify_and_inform_every_nb_machine_per_subnet_input()
         return real_nb_subnet #SubnetHandler.calculate_number_of_subnets(nb_subnet, subnet, mask);
 
     def controller_machine_per_sub_nb(self, nb_subnet, subnet, mask):

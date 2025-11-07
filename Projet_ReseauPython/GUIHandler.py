@@ -327,6 +327,7 @@ class Page3(tk.Frame):
 				entry = tk.Entry(self.nb_machine_inputs_container.inner, font=P2_FONT, width=20)
 				entry.grid(row=i, column=1, padx=5, pady=5)
 				entry.bind("<Return>", lambda event, widget=entry: self._nb_machine_input_apply_changes(widget))
+				entry.bind("<FocusOut>", lambda event, widget=entry: self._verify_and_inform_every_nb_machine_per_subnet_input())
 				if i >= nb_subnets_voulu:
 					entry.insert(0,"0") 
 				self.nb_machine_inputs.append(entry)
@@ -350,14 +351,30 @@ class Page3(tk.Frame):
 		else:
 			input_widget.focus_set()
 			input_widget.select_range(0, tk.END)
+		self._verify_and_inform_every_nb_machine_per_subnet_input()
+		
+	def _verify_and_inform_every_nb_machine_per_subnet_input(self):
+		for input_widget in self.nb_machine_inputs:
+			if not self._verify_nb_machine_per_subnet(input_widget, message_on_error=False):
+				if input_widget.get() != "":
+					#TODO: utiliser des couleurs plus douces
+					input_widget.configure({"background": "red"})
+				else:
+					input_widget.configure({"background": "white"})
+				#input_widget.delete(0,tk.END)
+				#input_widget.insert(0,"")
+			else:
+				input_widget.configure({"background": "white"})
 
-	def _verify_nb_machine_per_subnet(self, input_widget):
+	def _verify_nb_machine_per_subnet(self, input_widget, message_on_error : bool = True) -> bool:
 		input_widget_value : int = bu.to_int(input_widget.get())
 		if input_widget_value is None or input_widget_value < 0:
-			messagebox.showerror("Erreur", "Le nombre de machines par sous-réseau doit être un entier positif.")
+			if message_on_error:
+				messagebox.showerror("Erreur", "Le nombre de machines par sous-réseau doit être un entier positif.")
 			return False
 		if input_widget_value > self.data['nb_max_machines_per_subnet']:
-			messagebox.showerror("Erreur", f"Le nombre de machines par sous-réseau ne doit pas dépasser {self.data['nb_max_machines_per_subnet']}.")
+			if message_on_error:	
+				messagebox.showerror("Erreur", f"Le nombre de machines par sous-réseau ne doit pas dépasser {self.data['nb_max_machines_per_subnet']}.")
 			return False
 		return True
 	
