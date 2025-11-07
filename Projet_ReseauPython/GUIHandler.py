@@ -410,13 +410,15 @@ class Page3(tk.Frame):
 		self.nb_subnet.grid(row=3, column=1, columnspan=2, padx=5, pady=5, sticky="w")
 		self.nb_subnet.insert(0,"16") #TODO retirer la valeur par defaut
 
-		tk.Button(self, text="Calculer la découpe", command=self.show_subnetting_result, font=P2_FONT, borderwidth=1, relief="solid").grid(row=4, column=0, padx=5, pady=5)
-
+		tk.Button(self, text="Valider", command=self._apply_changes_from_inputs_of_group1, font=P2_FONT, borderwidth=1, relief="solid").grid(row=3, column=3, padx=5, pady=5)
+		
 		# container des inputs dynamiques pour le nombre de machines par sous-réseaux
 		self.nb_machine_inputs_container = ScrollableFrame(self)
-		self.nb_machine_inputs_container.grid(row=5, column=0, columnspan=3, padx=5, pady=5)
+		self.nb_machine_inputs_container.grid(row=4, column=0, columnspan=3, padx=5, pady=5)
 		self.nb_machine_inputs_container.config(height=300,width=500)  # Hauteur fixe pour le conteneur scrollable
-		#self.nb_machine_inputs_container.grid_propagate(False)
+		
+
+		tk.Button(self, text="Calculer la découpe", command=self.show_subnetting_result, font=P2_FONT, borderwidth=1, relief="solid").grid(row=5, column=0, columnspan=2, padx=5, pady=5)
 
 		#-----------------------------------------------------------------------------------------------
 
