@@ -264,6 +264,7 @@ class Page3(tk.Frame):
 				tk.Label(self.nb_machine_inputs_container.inner, text=f"Nb machine sous-réseau ({i+1}):", font=P2_FONT).grid(row=i, column=0, padx=5, pady=5, sticky="e")
 				entry = tk.Entry(self.nb_machine_inputs_container.inner, font=P2_FONT, width=20)
 				entry.grid(row=i, column=1, padx=5, pady=5)
+				entry.bind("<Return>", lambda event, widget=entry: self._focus_to_next_nb_machine_input(widget))
 				if i >= nb_subnets_voulu:
 					entry.insert(0,"0") 
 				self.nb_machine_inputs.append(entry)
@@ -275,7 +276,22 @@ class Page3(tk.Frame):
 	
 	#TODO : manque de clareté, ne parle que d'une parti des champs, pas tous.	
 	def _apply_changes_from_inputs_of_group1(self):
-		self.controller.controller_create_number_of_subnets_input(self,self.nb_subnet.get(),self.network_entry.get(),self.mask_entry.get())
+		self.controller.controller_create_number_of_subnets_input(
+			self,self.nb_subnet.get(),
+			self.network_entry.get(),
+			self.mask_entry.get()
+		)
+
+	def _verify_nb_machine_per_subnet(self):
+		return
+	
+	def _focus_to_next_nb_machine_input(self,input_widget):
+		info = input_widget.grid_info()
+		#info["row"]
+		if info["row"] + 1 < len(self.nb_machine_inputs):
+			self.nb_machine_inputs[info["row"]+1].focus_set()
+    	
+		
 
 	def __init__(self , parent, controller : 'GUIController.GUIController'):
 
@@ -283,6 +299,12 @@ class Page3(tk.Frame):
 		super().__init__(parent, pady=10, width=controller.root.winfo_screenwidth())
 		self.controller : 'GUIController.GUIController' = controller
 		self.nb_machine_inputs : {tk.Widget} = []
+		self.data = {}
+		self.data['nb_subnets'] = 0
+		self.data['nb_max_machines_per_subnet'] = 0
+		self.data['nb_machines_per_subnet'] = []
+		self.data['network'] = None
+		self.data['mask'] = None
 		# #--------------------------------------|Découpage en sous-réseaux|--------------------------------------
 		label = tk.Label(self, text="Découpe en sous-réseaux", font=H2_FONT).grid(row=0, column=0, padx=5, pady=5, sticky="e", columnspan=5)
 		
