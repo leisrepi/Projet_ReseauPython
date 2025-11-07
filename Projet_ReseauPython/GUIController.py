@@ -205,6 +205,9 @@ class GUIController:
 
 
         max_machine_per_subnet = AddressHandler.calculate_max_host_per_subnet(nb_subnet_voulue, subnet, mask)
+        if max_machine_per_subnet < 2:
+            msg.showerror("Erreur", "Le nombre de sous-réseaux demandé est trop élevé pour le réseau donné.")
+            return None
         page3.data['nb_max_machines_per_subnet'] = max_machine_per_subnet
         #Demander a l'utilisateur si ce nombre de machine maximal lui convient
         if msg.askyesno("Confirmation", f"Le nombre de machine par sous réseau maximal sera de: {max_machine_per_subnet}. Voulez-vous continuer ?") == False:
@@ -215,7 +218,8 @@ class GUIController:
 
         #TODO : stocker quelque part le nombre max de machine par sous réseau ? ou le recalculer?
         # faire en sorte que quand l'utilisateur appuer sur "return" sur un champs, sa le verifie et passe au suivant si correct
-
+        page3.nb_machines_per_subnet_label["text"] = "Nombre maximum de machines par sous-réseaux: " + str(max_machine_per_subnet)
+        page3.nb_subnets_label["text"] = "Nombre de sous-réseaux créés: " + str(real_nb_subnet)
         return real_nb_subnet #SubnetHandler.calculate_number_of_subnets(nb_subnet, subnet, mask);
 
     def controller_machine_per_sub_nb(self, nb_subnet, subnet, mask):

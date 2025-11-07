@@ -412,13 +412,21 @@ class Page3(tk.Frame):
 
 		tk.Button(self, text="Valider", command=self._apply_changes_from_inputs_of_group1, font=P2_FONT, borderwidth=1, relief="solid").grid(row=3, column=3, padx=5, pady=5)
 		
+		#Affichage du nombre de sous-réseaux créés
+		self.nb_subnets_label = tk.Label(self, text="Nombre de sous-réseaux créés: 0", font=P2_FONT)
+		self.nb_subnets_label.grid(row=4, column=0, columnspan=3, padx=5, pady=5)
+
+		#Affichage du nombre maximum de machines par sous-réseaux
+		self.nb_machines_per_subnet_label = tk.Label(self, text="Nombre maximum de machines par sous-réseaux: 0", font=P2_FONT)
+		self.nb_machines_per_subnet_label.grid(row=5, column=0, columnspan=3, padx=5, pady=5)
+
 		# container des inputs dynamiques pour le nombre de machines par sous-réseaux
 		self.nb_machine_inputs_container = ScrollableFrame(self)
-		self.nb_machine_inputs_container.grid(row=4, column=0, columnspan=3, padx=5, pady=5)
+		self.nb_machine_inputs_container.grid(row=6, column=0, columnspan=3, padx=5, pady=5)
 		self.nb_machine_inputs_container.config(height=300,width=500)  # Hauteur fixe pour le conteneur scrollable
 		
 
-		tk.Button(self, text="Calculer la découpe", command=self.show_subnetting_result, font=P2_FONT, borderwidth=1, relief="solid").grid(row=5, column=0, columnspan=2, padx=5, pady=5)
+		tk.Button(self, text="Calculer la découpe", command=self.show_subnetting_result, font=P2_FONT, borderwidth=1, relief="solid").grid(row=7, column=0, columnspan=2, padx=5, pady=5)
 
 		#-----------------------------------------------------------------------------------------------
 
