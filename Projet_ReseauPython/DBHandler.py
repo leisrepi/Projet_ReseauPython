@@ -42,6 +42,15 @@ def create_db():
     print("DB créer")
 
 def is_user_on_db(pseudo, motdepasse):
+    """ Sert à vérifier si un utilisateur est déjà dans la base de donnée.
+    
+        Args:
+            pseudo (String) : Pseudo de l'utilisateur.
+            motdepasse (String) : Mot de passe lié a l'utilisateur.
+        
+        Returns:
+            Renvoie True si l'utilisateur existe ou False si il n'éxiste pas.
+    """
     
     if(pseudo is None or motdepasse is None):
         print("Aucun pseudo ou mot de passe insérer.")
@@ -92,6 +101,15 @@ def get_user_specified_subnet(session, pseudo, id_subnetting, numSR):
     return cursor.fetchall()
 
 def insert_user( pseudo, mdp):
+    """ Sert à ajouter un utilisateur à la base de donnée.
+    
+        Args:
+            pseudo (String) : Pseudo de l'utilisateur.
+            mdp (String) : Mot de passe lié a l'utilisateur.
+        
+        Returns:
+            Aucun retour (Void method)
+    """
     if(is_user_on_db(pseudo, mdp) is not False):
         print("Refusé ! l'utilisateur existe deja .")
         return AppException.UserAlreadyInDBException
@@ -102,6 +120,22 @@ def insert_user( pseudo, mdp):
     print('Utilisateur crée !')
 
 def insert_decoupe(session, nomDecoupe, pseudo, AdresseReseaux, masqueReseaux):
+    """ Sert à ajouter une découpe à l'utilisateur spécifié.
+    
+        Args:
+            session : Session d'authentification.
+            nomDecoupe (String): Nom de la découpe à créer.
+            pseudo (String) : Pseudo de l'utilisateur.
+            id_subnetting (String) : Nom de la découpe du réseau.
+            AdresseReseaux (String) : Adresse IP du réseau.
+            masqueReseaux (String) : Masque du réseau.
+
+        Returns:
+            False si un ou plusieurs champ(s) est/sont manquant(s). Si la méthode ne renvoie rien c'est qu'aucune erreur n'a été commise.
+        
+        Raise:
+            Peut lever l'exception NotAuthentifyException si la session est mauvaise.
+    """
     if(ath.verify_session(session) is not True):
         raise AppException.NotAuthentifyException
     if(nomDecoupe is None or pseudo is None or AdresseReseaux is None or masqueReseaux is None):
@@ -113,6 +147,21 @@ def insert_decoupe(session, nomDecoupe, pseudo, AdresseReseaux, masqueReseaux):
     print("insertion de la decoupe effectue")
 
 def insert_sous_reseau(session, numSR, nbMachine, nomDecoupe, pseudo):
+    """ Sert à ajouter une découpe à l'utilisateur spécifié.
+    
+        Args:
+            session : Session d'authentification.
+            numSR (String): Numéro du sous réseau à créer.
+            nbMachine (Int) : Nombre de machine shouaité par l'utilisateur.
+            nomDecoupe (String) : Nom de la découpe ou insérer le sous-réseau.
+            pseudo (String) : Pseudo de l'utilisateur.
+            
+        Returns:
+            False si un ou plusieurs champ(s) est/sont manquant(s). La méthode ne renvoie rien si aucune erreur n'a été commise.
+        
+        Raise:
+            Peut lever l'exception NotAuthentifyException si la session est mauvaise.
+    """
     if(ath.verify_session(session) is not True):
         raise AppException.NotAuthentifyException
     if(numSR is None or nbMachine is None or nomDecoupe is None or pseudo is None):
