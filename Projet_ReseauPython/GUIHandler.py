@@ -31,6 +31,15 @@ def clean_tk_element(element):
 	for w in element.winfo_children():
 		w.destroy()
 
+
+#TODO : faire la documentation
+# Fonction pour supprimer tous les widgets d'une ligne donnée
+def supprimer_row(element,row_num):
+    for widget in element.grid_slaves():  # Récupère tous les widgets gérés par grid
+        info = widget.grid_info()
+        if info["row"] == row_num:
+            widget.grid_forget()  # ou widget.destroy() pour les supprimer définitivement
+
 class LoginMenu:
 	def __init__(self, controller):
 		self.controller = controller
@@ -249,22 +258,28 @@ class Page3(tk.Frame):
 		#self.nb_subnet.delete(0, tk.END)
 		#self.nb_subnet.insert(0, str(nb_subnets))
 	def change_nb_machines_inputs(self, nb_subnets, nb_subnets_voulu):
-		clean_tk_element(self.nb_machine_inputs_container.inner)
-		self.nb_machine_inputs = []
-		for i in range(nb_subnets):
-			tk.Label(self.nb_machine_inputs_container.inner, text=f"Nb machine sous-réseau ({i+1}):", font=P2_FONT).grid(row=i, column=0, padx=5, pady=5, sticky="e")
-			entry = tk.Entry(self.nb_machine_inputs_container.inner, font=P2_FONT, width=20)
-			entry.grid(row=i, column=1, padx=5, pady=5)
-			if i >= nb_subnets_voulu:
-				entry.insert(0,"0") #TODO retirer la valeur par defaut
-			self.nb_machine_inputs.append(entry)
-		pass
+		#clean_tk_element(self.nb_machine_inputs_container.inner)
+		if len(self.nb_machine_inputs) < nb_subnets: #plus petit, on dois en ajouter:
+			for i in range(len(self.nb_machine_inputs), nb_subnets):
+				tk.Label(self.nb_machine_inputs_container.inner, text=f"Nb machine sous-réseau ({i+1}):", font=P2_FONT).grid(row=i, column=0, padx=5, pady=5, sticky="e")
+				entry = tk.Entry(self.nb_machine_inputs_container.inner, font=P2_FONT, width=20)
+				entry.grid(row=i, column=1, padx=5, pady=5)
+				if i >= nb_subnets_voulu:
+					entry.insert(0,"0") 
+				self.nb_machine_inputs.append(entry)
+		else: #plus grand, on dois en retirer:
+			for i in range(nb_subnets, len(self.nb_machine_inputs)):
+				supprimer_row(self.nb_machine_inputs_container.inner, i)
+				#self.nb_machine_inputs[i].destroy() #detruit l'element tk
+			self.nb_machine_inputs = self.nb_machine_inputs[:nb_subnets] #retire les references
+	
 			
 	def __init__(self , parent, controller : 'GUIController.GUIController'):
 
 				
 		super().__init__(parent, pady=10, width=controller.root.winfo_screenwidth())
 		self.controller : 'GUIController.GUIController' = controller
+		self.nb_machine_inputs : {tk.Widget} = []
 		# #--------------------------------------|Découpage en sous-réseaux|--------------------------------------
 		label = tk.Label(self, text="Découpe en sous-réseaux", font=H2_FONT).grid(row=0, column=0, padx=5, pady=5, sticky="e", columnspan=5)
 		
