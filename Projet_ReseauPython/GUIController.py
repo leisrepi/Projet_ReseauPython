@@ -201,7 +201,7 @@ class GUIController:
             return None
 
         #TODO : hardcoder
-        page3.init_nb_machines_inputs(16, nb_subnet)
+        page3.change_nb_machines_inputs(16, nb_subnet)
         return 16 #SubnetHandler.calculate_number_of_subnets(nb_subnet, subnet, mask);
 
     def controller_machine_per_sub_nb(self, nb_subnet, subnet, mask):

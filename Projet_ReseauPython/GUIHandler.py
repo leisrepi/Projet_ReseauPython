@@ -243,12 +243,12 @@ class Page3(tk.Frame):
 		response : bool = messagebox.askyesno("Nombre de machines par sous-réseaux", f"Nombre de machine par sous-réseaux calculés : {nb_machines_max}")
 		if response:
 			print("user said yes")
-			self.init_nb_machines_inputs(nb_reseau,nb_reseau_voulu)
+			self.change_nb_machines_inputs(nb_reseau,nb_reseau_voulu)
 			pass
 		#nb_subnets = len(result)
 		#self.nb_subnet.delete(0, tk.END)
 		#self.nb_subnet.insert(0, str(nb_subnets))
-	def init_nb_machines_inputs(self, nb_subnets, nb_subnets_voulu):
+	def change_nb_machines_inputs(self, nb_subnets, nb_subnets_voulu):
 		clean_tk_element(self.nb_machine_inputs_container.inner)
 		self.nb_machine_inputs = []
 		for i in range(nb_subnets):
