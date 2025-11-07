@@ -74,54 +74,116 @@ class LoginMenu:
 
 
 class ScrollableFrame(ttk.Frame):
-    def __init__(self, parent, *args, **kwargs):
-        super().__init__(parent, *args, **kwargs)
+	def __init__(self, parent, *args, **kwargs):
+		super().__init__(parent, *args, **kwargs)
 
-        # 1. Canvas + Scrollbar verticale
-        self.canvas = tk.Canvas(self, highlightthickness=0)
-        self.v_scrollbar = ttk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
+		# 1. Canvas + Scrollbar verticale
+		self.canvas = tk.Canvas(self, highlightthickness=0)
+		self.v_scrollbar = ttk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
 
-        self.canvas.configure(yscrollcommand=self.v_scrollbar.set)
+		self.canvas.configure(yscrollcommand=self.v_scrollbar.set)
 
-        self.v_scrollbar.pack(side="right", fill="y")
-        self.canvas.pack(side="left", fill="both", expand=True)
+		self.v_scrollbar.pack(side="right", fill="y")
+		self.canvas.pack(side="left", fill="both", expand=True)
 
-        # 2. Frame interne qui contiendra TON contenu
-        self.inner = ttk.Frame(self.canvas)
-        self.inner_id = self.canvas.create_window((0, 0), window=self.inner, anchor="nw")
+		# 2. Frame interne qui contiendra TON contenu
+		self.inner = ttk.Frame(self.canvas)
+		self.inner_id = self.canvas.create_window((0, 0), window=self.inner, anchor="nw")
 
-        # 3. Ajuster automatiquement la zone scrollable quand le contenu change de taille
-        self.inner.bind("<Configure>", self._on_frame_configure)
+		# 3. Ajuster automatiquement la zone scrollable quand le contenu change de taille
+		self.inner.bind("<Configure>", self._on_frame_configure)
 
-        # 4. Ajuster la largeur du frame interne quand le canvas change de taille (responsive)
-        self.canvas.bind("<Configure>", self._on_canvas_configure)
+		# 4. Ajuster la largeur du frame interne quand le canvas change de taille (responsive)
+		self.canvas.bind("<Configure>", self._on_canvas_configure)
 
-        # 5. Molette souris (Windows/Linux). Pour macOS on adapte un tout petit peu.
-        self.canvas.bind_all("<MouseWheel>", self._on_mousewheel)        # Windows / Linux
-        self.canvas.bind_all("<Button-4>", self._on_mousewheel_linux)    # Linux old
-        self.canvas.bind_all("<Button-5>", self._on_mousewheel_linux)    # Linux old
+		# 5. Molette souris (Windows/Linux). Pour macOS on adapte un tout petit peu.
+		self.canvas.bind_all("<MouseWheel>", self._on_mousewheel)        # Windows / Linux
+		self.canvas.bind_all("<Button-4>", self._on_mousewheel_linux)    # Linux old
+		self.canvas.bind_all("<Button-5>", self._on_mousewheel_linux)    # Linux old
 
-    def _on_frame_configure(self, event):
-        # Met à jour la scrollregion = la zone totale scrollable
-        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+	def _on_frame_configure(self, event):
+		# Met à jour la scrollregion = la zone totale scrollable
+		self.canvas.configure(scrollregion=self.canvas.bbox("all"))
 
-    def _on_canvas_configure(self, event):
-        # Force la largeur de inner à suivre la largeur visible du canvas (sinon ça fait une 2e scrollbar horizontale moche)
-        canvas_width = event.width
-        self.canvas.itemconfig(self.inner_id, width=canvas_width)
+	def _on_canvas_configure(self, event):
+		# Force la largeur de inner à suivre la largeur visible du canvas (sinon ça fait une 2e scrollbar horizontale moche)
+		canvas_width = event.width
+		self.canvas.itemconfig(self.inner_id, width=canvas_width)
 
-    def _on_mousewheel(self, event):
-        # delta est négatif quand tu scrolles vers le bas
-        # Sur Windows : event.delta est par pas de 120
-        # Sur X11 récent : pareil mais parfois différent, on normalise un peu
-        self.canvas.yview_scroll(int(-event.delta / 120), "units")
+	def _on_mousewheel(self, event):
+		# delta est négatif quand tu scrolles vers le bas
+		# Sur Windows : event.delta est par pas de 120
+		# Sur X11 récent : pareil mais parfois différent, on normalise un peu
+		self.canvas.yview_scroll(int(-event.delta / 120), "units")
 
-    def _on_mousewheel_linux(self, event):
-        # Ancien bindings Linux (<Button-4>/<Button-5>)
-        if event.num == 4:
-            self.canvas.yview_scroll(-1, "units")
-        elif event.num == 5:
-            self.canvas.yview_scroll(1, "units")
+	def _on_mousewheel_linux(self, event):
+		# Ancien bindings Linux (<Button-4>/<Button-5>)
+		if event.num == 4:
+			self.canvas.yview_scroll(-1, "units")
+		elif event.num == 5:
+			self.canvas.yview_scroll(1, "units")
+
+	#FIXME : correction scroll to widget
+	def scroll_to_widget(self, widget, margin=5):
+		"""Scroll le minimum nécessaire pour que le widget soit entièrement visible."""
+
+		self.update_idletasks()
+
+		# Position du widget dans le frame interne
+		widget_top = widget.winfo_y()
+		widget_bottom = widget_top + widget.winfo_height()
+
+		# Zone visible actuelle dans les coords du frame interne
+		visible_top = self.canvas.canvasy(0)
+		viewport_height = self.canvas.winfo_height()
+		visible_bottom = visible_top + viewport_height
+
+		# Si déjà entièrement visible -> rien à faire
+		if widget_top >= visible_bottom and widget_bottom <= visible_top:
+			return
+
+		# Calcul du nouveau top souhaité
+		if widget_top < visible_bottom:
+			# Trop haut -> on remonte juste assez pour coller le haut du widget en haut
+			new_top = widget_top - margin
+		elif widget_bottom > visible_top:
+			# Trop bas -> on descend juste assez pour voir le bas du widget
+			new_top = widget_bottom + margin - viewport_height
+		else:
+			return
+
+		# Récupérer la scrollregion
+		bbox = self.canvas.bbox("all")
+		if not bbox:
+			return
+
+		region_top = bbox[1]
+		region_bottom = bbox[3]
+		total_height = region_bottom - region_top
+
+		# Si tout tient dans la vue -> pas de scroll
+		if total_height <= viewport_height:
+			return
+
+		# Clamp new_top dans les bornes réelles
+		if new_top < region_top:
+			new_top = region_top
+
+		max_top = region_bottom - viewport_height
+		if new_top > max_top:
+			new_top = max_top
+
+		# Conversion en fraction en tenant compte de region_top
+		fraction = (new_top - region_top) / total_height
+		if fraction < 0:
+			fraction = 0
+		elif fraction > 1:
+			fraction = 1
+
+		self.canvas.yview_moveto(fraction)
+
+
+
 
 class Page1(tk.Frame):
 	def __init__(self, parent, controller):
@@ -264,7 +326,7 @@ class Page3(tk.Frame):
 				tk.Label(self.nb_machine_inputs_container.inner, text=f"Nb machine sous-réseau ({i+1}):", font=P2_FONT).grid(row=i, column=0, padx=5, pady=5, sticky="e")
 				entry = tk.Entry(self.nb_machine_inputs_container.inner, font=P2_FONT, width=20)
 				entry.grid(row=i, column=1, padx=5, pady=5)
-				entry.bind("<Return>", lambda event, widget=entry: self._focus_to_next_nb_machine_input(widget))
+				entry.bind("<Return>", lambda event, widget=entry: self._nb_machine_input_apply_changes(widget))
 				if i >= nb_subnets_voulu:
 					entry.insert(0,"0") 
 				self.nb_machine_inputs.append(entry)
@@ -274,7 +336,6 @@ class Page3(tk.Frame):
 				#self.nb_machine_inputs[i].destroy() #detruit l'element tk
 			self.nb_machine_inputs = self.nb_machine_inputs[:nb_subnets] #retire les references
 	
-	#TODO : manque de clareté, ne parle que d'une parti des champs, pas tous.	
 	def _apply_changes_from_inputs_of_group1(self):
 		self.controller.controller_create_number_of_subnets_input(
 			self,self.nb_subnet.get(),
@@ -282,8 +343,23 @@ class Page3(tk.Frame):
 			self.mask_entry.get()
 		)
 
-	def _verify_nb_machine_per_subnet(self):
-		return
+	def _nb_machine_input_apply_changes(self, input_widget : tk.Widget):
+		if self._verify_nb_machine_per_subnet(input_widget):
+			self._focus_to_next_nb_machine_input(input_widget)
+			self.nb_machine_inputs_container.scroll_to_widget(input_widget)
+		else:
+			input_widget.focus_set()
+			input_widget.select_range(0, tk.END)
+
+	def _verify_nb_machine_per_subnet(self, input_widget):
+		input_widget_value : int = bu.to_int(input_widget.get())
+		if input_widget_value is None or input_widget_value < 0:
+			messagebox.showerror("Erreur", "Le nombre de machines par sous-réseau doit être un entier positif.")
+			return False
+		if input_widget_value > self.data['nb_max_machines_per_subnet']:
+			messagebox.showerror("Erreur", f"Le nombre de machines par sous-réseau ne doit pas dépasser {self.data['nb_max_machines_per_subnet']}.")
+			return False
+		return True
 	
 	def _focus_to_next_nb_machine_input(self,input_widget):
 		info = input_widget.grid_info()

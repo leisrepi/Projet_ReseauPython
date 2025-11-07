@@ -205,6 +205,7 @@ class GUIController:
 
 
         max_machine_per_subnet = AddressHandler.calculate_max_host_per_subnet(nb_subnet_voulue, subnet, mask)
+        page3.data['nb_max_machines_per_subnet'] = max_machine_per_subnet
         #Demander a l'utilisateur si ce nombre de machine maximal lui convient
         if msg.askyesno("Confirmation", f"Le nombre de machine par sous réseau maximal sera de: {max_machine_per_subnet}. Voulez-vous continuer ?") == False:
             return None
