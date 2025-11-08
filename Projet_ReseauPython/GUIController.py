@@ -153,10 +153,6 @@ class GUIController:
             tk.messagebox.showerror("Erreur", f"Erreur lors de la création du réseau : {e}")
             return
         
-        combobox_list = list(page3.list_machines_combobox["values"])
-        if(len(combobox_list) < 3): # 3 car le premier élément est une chaîne vide
-            tk.messagebox.showerror("Erreur", "Veuillez ajouter au moins 2 nombre de machines.")
-            return
         
         # on transforme les input en liste d'entiers
         list_nb_machines = []
@@ -168,7 +164,8 @@ class GUIController:
             list_nb_machines.append(bu.to_int(input.get()))
 
         #list_nb_machines = list(map(int, combobox_list[1:]))
-        return calculate_subnetting(network, list_nb_machines), calculate_step(calculate_nb_machines_max(list_nb_machines)), network.num_addresses - 2
+        #TODO : recyclage de fonction, CE n'est PAS DU TOUT PROPRE VOIR SOLIDE !!!!!
+        return calculate_subnetting(network, list_nb_machines), calculate_step(page3.data['nb_max_machines_per_subnet']), network.num_addresses - 2
 
 
 
@@ -196,6 +193,7 @@ class GUIController:
         if max_machine_per_subnet < 2:
             msg.showerror("Erreur", "Le nombre de sous-réseaux demandé est trop élevé pour le réseau donné.")
             return None
+        page3.data['nb_max_machines_per_subnet'] = max_machine_per_subnet
         
         return real_nb_subnet, max_machine_per_subnet
 
