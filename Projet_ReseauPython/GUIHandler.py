@@ -273,7 +273,20 @@ class Page3(tk.Frame):
 	#TODO : bouton pour mettre les champs (non remplis) nb_machines a 0 (si on voulais 13 réseau, 16 serons crée )
 	
 	
+	#TODO : deplacer cela dans le controller
 	def show_subnetting_result(self):
+		#Verification des entrées utilisateur
+
+		#verification adresse réseau et masque
+		if self.controller.controller_verify_input_group1(self,self.nb_subnet.get(),self.network_entry.get(), self.mask_entry.get()) is None:
+			return
+
+		#verfication nb machines par sous reseau (si vide)
+		if not self.controller.controller_verify_and_propose_correction_empty_machine_per_subnet_input(self):
+			return
+		#verfication nb machines par sous reseau (si valide)
+		if not self._is_nb_machine_per_subnet_inputs_valid():
+			return
 
 		# On vide le tableau avant d'afficher les nouveaux résultats
 		self.tree.delete(*self.tree.get_children())
@@ -319,7 +332,7 @@ class Page3(tk.Frame):
 		#nb_subnets = len(result)
 		#self.nb_subnet.delete(0, tk.END)
 		#self.nb_subnet.insert(0, str(nb_subnets))
-	def change_nb_machines_inputs(self, nb_subnets, nb_subnets_voulu):
+	def change_nb_machines_inputs(self, nb_subnets, nb_subnets_voulu : int):
 		#clean_tk_element(self.nb_machine_inputs_container.inner)
 		if len(self.nb_machine_inputs) < nb_subnets: #plus petit, on dois en ajouter:
 			for i in range(len(self.nb_machine_inputs), nb_subnets):
@@ -338,7 +351,7 @@ class Page3(tk.Frame):
 			self.nb_machine_inputs = self.nb_machine_inputs[:nb_subnets] #retire les references
 	
 	def _apply_changes_from_inputs_of_group1(self):
-		self.controller.controller_create_number_of_subnets_input(
+		return self.controller.controller_create_number_of_subnets_input(
 			self,self.nb_subnet.get(),
 			self.network_entry.get(),
 			self.mask_entry.get()
@@ -353,6 +366,12 @@ class Page3(tk.Frame):
 			input_widget.select_range(0, tk.END)
 		self._verify_and_inform_every_nb_machine_per_subnet_input()
 		
+
+	def _is_nb_machine_per_subnet_inputs_valid(self) -> bool:
+		for input_widget in self.nb_machine_inputs:
+			if not self._verify_nb_machine_per_subnet(input_widget, message_on_error=True, travel_to_input=True):
+				return False
+		return True
 	def _verify_and_inform_every_nb_machine_per_subnet_input(self):
 		for input_widget in self.nb_machine_inputs:
 			if not self._verify_nb_machine_per_subnet(input_widget, message_on_error=False):
@@ -366,15 +385,25 @@ class Page3(tk.Frame):
 			else:
 				input_widget.configure({"background": "white"})
 
-	def _verify_nb_machine_per_subnet(self, input_widget, message_on_error : bool = True) -> bool:
+
+	#pour respecter le mvc, cela devrais etre dans le controller
+	def _verify_nb_machine_per_subnet(self, input_widget, message_on_error : bool = True, travel_to_input : bool = False) -> bool:
 		input_widget_value : int = bu.to_int(input_widget.get())
 		if input_widget_value is None or input_widget_value < 0:
 			if message_on_error:
 				messagebox.showerror("Erreur", "Le nombre de machines par sous-réseau doit être un entier positif.")
+				if travel_to_input:
+					input_widget.focus_set()
+					input_widget.select_range(0, tk.END)
+					self.nb_machine_inputs_container.scroll_to_widget(input_widget)
 			return False
 		if input_widget_value > self.data['nb_max_machines_per_subnet']:
 			if message_on_error:	
 				messagebox.showerror("Erreur", f"Le nombre de machines par sous-réseau ne doit pas dépasser {self.data['nb_max_machines_per_subnet']}.")
+				if travel_to_input:
+					input_widget.focus_set()
+					input_widget.select_range(0, tk.END)
+					self.nb_machine_inputs_container.scroll_to_widget(input_widget)
 			return False
 		return True
 	
@@ -496,7 +525,7 @@ class MainApp:
 		self.controller = controller
 		self.root = controller.root
 		self.root.title("Application Principale")
-		self.root.geometry(str(self.root.winfo_screenwidth())+"x"+str(self.root.winfo_screenheight()))
+		self.root.geometry("1600x800")#str(self.root.winfo_screenwidth())+"x"+str(self.root.winfo_screenheight()))
 		# Frame pour le label de bienvenue
 		header_frame = tk.Frame(self.root)
 		header_frame.grid(row=0, column=0, columnspan=2, sticky="ew")
