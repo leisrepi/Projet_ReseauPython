@@ -153,7 +153,9 @@ class Page2(tk.Frame):
 			messagebox.showerror("Erreur", str(e))
 		except InvalidMaskException as e:
 			messagebox.showerror("Erreur", str(e))
-
+		except MaskNotInRangeException as e:
+			messagebox.showerror("Erreur", str(e))
+		
 	def __init__(self, parent, controller):
 		super().__init__(parent, pady=10)
 		self.controller = controller

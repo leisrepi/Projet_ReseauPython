@@ -154,9 +154,12 @@ def check_ip_network(page2):
             raise AddressValueError("Adresse réseau invalide")
 
         if masque_input:
-            masque_norm = normaliser_masque_saisie(masque_input)
-            if masque_norm is None:
+            try:
+                masque_norm = normaliser_masque_saisie(masque_input)
+            except InvalidMaskException as e:
                 raise InvalidMaskException("Masque invalide(utilisez '/n' ou '255.255.255.x')")
+            except MaskNotInRangeException as e:
+                raise MaskNotInRangeException("Veuiller entrer un masque se trouvant entre /8 et /29 (ou 255.0.0.0 et 255.255.255.248)")
             masque_a_utiliser = masque_norm
         else:
             #Masque de classé basé sur l'adresse de réseau
@@ -239,7 +242,7 @@ def normaliser_masque_saisie(saisie_masque: str):
             if  8 <= p < 30:
                 net_tmp = IPv4Network(f"0.0.0.0/{p}")
                 return str(net_tmp.netmask)
-            raise InvalidMaskException()
+            raise MaskNotInRangeException()
         #Cas masque décimal
         net_tmp = IPv4Network(f"0.0.0.0/{p}")
         return str(net_tmp.netmask)
