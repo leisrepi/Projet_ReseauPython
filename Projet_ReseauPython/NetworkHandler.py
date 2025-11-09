@@ -2,12 +2,47 @@
 #             Imports
 # --------------------------------------
 
-from ipaddress import IPv4Network, AddressValueError, NetmaskValueError
-from AppException import InvalidMaskException
+from ipaddress import IPv4Network, IPv4Address, AddressValueError, NetmaskValueError
+from AppException import InvalidMaskException, SNMaskErrorException 
+from AddressHandler import is_ip_valid, create_ip_address
 
 # --------------------------------------
 #             Fonctions
 # --------------------------------------
+
+#Retourne l'Ip du réseau et son adresse broadcast et le sous réseaux si possible
+def get_network_information_from_ip_address_and_mask(IpAddress, SNMask):
+
+    """ Retourne les infos du réseaux.
+
+        Args:
+            IpAddress (String) : adresse ip en format string
+            SNMask (String) : masque lier à l'adresse ip en format string
+            
+        Returns:
+            Adresse du réseaux et son broadcast. Adresse sous-réseaux et son broadcast.
+            Si le sous réseaux est impossible il renverra 'None' pour le sous réseaux et son broadcast.
+
+        Raises:
+            SNMaskErrorException: si le masque n'est pas correcte."""
+    
+    IpClient = create_ip_address(IpAddress)
+    netMask = define_mask_by_ip_class(IpClient)
+    IpNetwork = create_network(IpAddress, netMask, strict=False)
+
+    #vérification de l'appartenance du masque dde sous réseaux par rapport a celui du réseaux (vérification que celui-ci n'est pas plus grand)
+    if(str(IpNetwork.netmask) < SNMask):
+        raise SNMaskErrorException 
+    #TODO: gérer l'erreur dans le cas ou le sous réseaux est plus grand que le réseaux lui meme
+
+    if(IpNetwork.netmask == SNMask): #Vérification de la possibilité de sous-réseaux
+        return IpNetwork.network_address, IpNetwork.broadcast_address, None, None
+    
+    for SNIp in IpNetwork.hosts(): #boucle de recherche du sous réseaux dans lequel se trouve l'adresse Ip du client
+        SNIpAddress = SNIp
+    
+    SNBroadcast = IPv4Network(str(SNIpAddress)+"/"+SNMask, strict=False).broadcast_address
+    return IpNetwork.network_address, IpNetwork.broadcast_address, SNIpAddress, SNBroadcast
 
 # Vérification de la validité du masque.
 def is_mask_valid(mask):
@@ -84,3 +119,149 @@ def define_mask_by_ip_class(ip_address):
         return "255.255.255.0"
     else:
         raise InvalidMaskException("L'adresse IP ne peut pas avoir de masque (classe D ou E)")
+
+#Vérifie si l'adresse IP entré fait bien parti du réseau entré
+def check_ip_network(page2):
+    ip = page2.ip_var.get().strip()
+    reseau_input = page2.reseau_var.get().strip()
+    masque_input = page2.masque_var.get().strip()
+
+    #Validation de l'IP
+    if not is_ip_valid(ip):
+        print(reseau_input)
+        page2._set_status("Adresse IP invalide", ok=False)
+        page2._set_details("")
+        raise AddressValueError("Adresse IP invalide")
+    
+    #Détermination reseau_normalise et masque_a_utiliser
+    reseau_normalise = None
+    masque_a_utiliser = None
+    masque_class = None # Evite une erreur local si on veut l'utiliser dans ce scope
+
+    if not reseau_input:
+        page2._set_status("Réseau/sous-réseau manquant", ok=False)
+        page2._set_details("")
+        raise AddressValueError("Veuillez saisir un réseau ou sous-réseau")
+    
+    if "/" in reseau_input:
+        #CIDR direct (sous-réseau)
+        net = create_network(reseau_input)
+        print(net.is_private)
+        reseau_normalise = str(net.network_address)
+        masque_a_utiliser = str(net.netmask)
+    else:
+        if not is_ip_valid(reseau_input):
+            raise AddressValueError("Adresse réseau invalide")
+
+        if masque_input:
+            masque_norm = normaliser_masque_saisie(masque_input)
+            if masque_norm is None:
+                raise InvalidMaskException("Masque invalide(utilisez '/n' ou '255.255.255.x')")
+            masque_a_utiliser = masque_norm
+        else:
+            #Masque de classé basé sur l'adresse de réseau
+            reseau_ip_obj = create_ip_address(reseau_input)
+            try:
+                masque_class = define_mask_by_ip_class(reseau_ip_obj)
+            except InvalidMaskException:
+                raise InvalidMaskException("Impossible de déduire un masque de classe")
+            masque_a_utiliser = masque_class
+        reseau_normalise = reseau_input
+    # except Exception as e :
+    #     messagebox.showerror("Erreur", str(e))
+    #     self._set_status("Entrée invalides",ok=False)
+    #     self._set_details("")
+    #     return
+		
+    #Appartenance + bornes
+    appartient = appartient_au_reseau(ip, reseau_normalise, masque_a_utiliser)
+    debut, fin = bornes(reseau_normalise, masque_a_utiliser)
+    addr_net, addr_bcast = get_network_address_and_broadcast(reseau_normalise, masque_a_utiliser)
+
+    statut = f"{ip} et {reseau_normalise} / {masque_a_utiliser} -> {'oui' if appartient else 'non'}"
+    page2._set_status(statut, ok=appartient)
+
+    #Les détails
+    lignes = []
+    lignes.append(f"Réseau analysé : {reseau_normalise} / {masque_a_utiliser}")
+    if addr_net and addr_bcast:
+        lignes.append(f"Adresse réseau : {addr_net}")
+        lignes.append(f"Adresse broadcast : {addr_bcast}")
+    
+    if debut and fin:
+        lignes.append(f"Première IP hôte : {debut}")
+        lignes.append(f"Dernière IP hôte : {fin}")
+    else:
+        lignes.append("Pas d'adresses hôte (préfixe /31 ou /32)")
+
+    page2._set_details("\n".join(lignes))
+
+    #Vérifier si une IP appartient bien au réseau
+def appartient_au_reseau(ip_str, reseau_str, masque_str):
+    try:
+        ip=create_ip_address(ip_str)
+        reseau = IPv4Network(f"{reseau_str}/{masque_str}", strict=False)
+        return ip in reseau
+    except ValueError:
+        return False
+
+#Donner les ip machines (début et fin) d'un réseau
+def bornes(reseau_str, masque_str):
+    try:
+        reseau = IPv4Network(f"{reseau_str}/{masque_str}", strict=False)
+        if reseau.num_addresses <= 2:
+            return(None, None)
+        debut = IPv4Address(int(reseau.network_address)+1)
+        fin = IPv4Address(int(reseau.broadcast_address)-1)
+        return (debut,fin)
+    except ValueError:
+        return(None, None)
+    
+#Aides internes pour l'UI
+def normaliser_masque_saisie(saisie_masque: str):
+    """
+    Accepte '255.255.255.0' ou '/24' et renvoie un masque décimal normalisé '255.255.255.0'.
+    Renvoie None si invalide.
+    """
+    if saisie_masque is None:
+        return None
+    
+    s = str(saisie_masque).strip()
+    if not s:
+        return None
+
+    try:
+        #Cas longueur de préfixe
+        if s.startswith("/"):
+            s = s[1:]
+        if s.isdigit():
+            p = int(s)
+            if  8 <= p <= 30:
+                net_tmp = IPv4Network(f"0.0.0.0/{p}")
+                return str(net_tmp.netmask)
+            return None
+        #Cas masque décimal
+        net_tmp = IPv4Network(f"0.0.0.0/{p}")
+        return str(net_tmp.netmask)
+    except Exception:
+        return None
+        """
+        if not saisie_masque:
+            return None
+        if saisie_masque.startswith("/"):
+            p = int(saisie_masque[1:])
+            net_tmp = IPv4Network(f"0.0.0.0/{p}")
+            return str(net_tmp.netmask)
+        #sinon décimal
+        net_tmp = IPv4Network(f"0.0.0.0/{saisie_masque}")
+        return str(net_tmp.netmask)
+        """
+    except Exception:
+        return None
+
+def get_network_address_and_broadcast(reseau_str, masque_str):
+    try:
+        net = IPv4Network(f"{reseau_str}/{masque_str}",strict=False)
+        return str(net.network_address), str(net.broadcast_address)
+    except Exception:
+        return None, None
