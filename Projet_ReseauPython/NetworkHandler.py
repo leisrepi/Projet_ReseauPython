@@ -178,12 +178,12 @@ def check_ip_network(page2):
     debut, fin = bornes(reseau_normalise, masque_a_utiliser)
     addr_net, addr_bcast = get_network_address_and_broadcast(reseau_normalise, masque_a_utiliser)
 
-    statut = f"{ip} et {reseau_normalise} / {masque_a_utiliser} -> {'oui' if appartient else 'non'}"
+    statut = f"{ip} et {addr_net} / {masque_a_utiliser} -> {'oui' if appartient else 'non'}"
     page2._set_status(statut, ok=appartient)
 
     #Les détails
     lignes = []
-    lignes.append(f"Réseau analysé : {reseau_normalise} / {masque_a_utiliser}")
+    lignes.append(f"Réseau analysé : {addr_net} / {masque_a_utiliser}")
     if addr_net and addr_bcast:
         lignes.append(f"Adresse réseau : {addr_net}")
         lignes.append(f"Adresse broadcast : {addr_bcast}")
@@ -224,11 +224,11 @@ def normaliser_masque_saisie(saisie_masque: str):
     Renvoie None si invalide.
     """
     if saisie_masque is None:
-        return None
+        raise InvalidMaskException()
     
     s = str(saisie_masque).strip()
     if not s:
-        return None
+        raise InvalidMaskException()
 
     try:
         #Cas longueur de préfixe
@@ -236,15 +236,15 @@ def normaliser_masque_saisie(saisie_masque: str):
             s = s[1:]
         if s.isdigit():
             p = int(s)
-            if  8 <= p <= 30:
+            if  8 <= p < 30:
                 net_tmp = IPv4Network(f"0.0.0.0/{p}")
                 return str(net_tmp.netmask)
-            return None
+            raise InvalidMaskException()
         #Cas masque décimal
         net_tmp = IPv4Network(f"0.0.0.0/{p}")
         return str(net_tmp.netmask)
     except Exception:
-        return None
+        return InvalidMaskException()
         """
         if not saisie_masque:
             return None
@@ -256,8 +256,6 @@ def normaliser_masque_saisie(saisie_masque: str):
         net_tmp = IPv4Network(f"0.0.0.0/{saisie_masque}")
         return str(net_tmp.netmask)
         """
-    except Exception:
-        return None
 
 def get_network_address_and_broadcast(reseau_str, masque_str):
     try:
