@@ -109,6 +109,7 @@ def calculate_subnetting(network, nb_machines_list):
     # Pas entre chaque sous-réseau
     step = nb_machines - 1
 
+
     # Si le nombre de sous-réseaux est trop grand, on arrête l'opération et on renvoie une exception
     if(nb_subnet > 100):
         raise TooManyMachinesException("Le nombre de machines par sous-réseau a dépassé la limite (100). Opération annulée.")
