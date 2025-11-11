@@ -16,6 +16,7 @@ import NetworkHandler
 import BasicUtilies as bu
 import tkinter.messagebox as msg
 
+from ipaddress import IPv4Address
 from typing import TYPE_CHECKING #pour avoir la docu sans import du module a l'execution (car pas besoin et importation circulaire)
 if TYPE_CHECKING:
 	import GUIHandler
@@ -145,7 +146,7 @@ class GUIController:
             print("refreshed")
     #TODO : vérifier les entrées utilisateur avant de lancer le calcul (si elles ne sont pas vides et sont valides)
     #FIXME: modifier calculate_step pour qu'il affiche le bon pas
-    def controller_subnetting_calculation(self, page3):
+    def controller_subnetting_calculation(self, page3 : GUIHandler.Page3):
         try:
             network = create_network(page3.network_entry.get(), page3.mask_entry.get())
         except NetmaskValueError as e:
@@ -180,8 +181,6 @@ class GUIController:
             msg.showerror("Erreur", "Le nombre de sous-réseaux doit être un entier positif et inférieur ou égal à 100.")
             return None
         
-        
-        
         #verification du mask
         try:
             NetworkHandler.validate_mask_format(mask)
@@ -190,7 +189,10 @@ class GUIController:
             return None
 
         #verification du subnet
-
+          #verif de la validité de l'adresse IP
+        if not AddressHandler.is_ip_valid(subnet):
+            msg.showerror("Erreur", "Le format de l'adresse IP du sous-réseau est invalide.")
+            return None
 
         max_machine_per_subnet = AddressHandler.calculate_max_host_per_subnet(nb_subnet_voulue, subnet, mask)
         if max_machine_per_subnet < 2:
