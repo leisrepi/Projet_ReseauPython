@@ -299,6 +299,7 @@ class Page3(tk.Frame):
 		# On remplit le tableau avec le résultat
 		i = 0
 		for ligne in result:
+			ligne.insert(0, str(self.nb_machine_inputs[i].get()))  # Ajout du pas au début de la ligne
 			ligne.insert(0, str(i+1))  # Ajout du numéro de sous-réseau au début de la ligne
 			if(i % 2 == 0):
 				self.tree.insert('', 'end', values=ligne, tags=("evenrow",))
@@ -487,7 +488,7 @@ class Page3(tk.Frame):
 		#-----------------------------------------------------------------------------------------------
 
 		# Tableau des sous-réseaux
-		colonnes = ["N°","Adresse de sous-réseau", "Adresse de broadcast", "Première IP", "Dernière IP"]
+		colonnes = ["N°","Nb machine","Adresse de sous-réseau", "Adresse de broadcast", "Première IP", "Dernière IP"]
 		self.tree = ttk.Treeview(self, columns=colonnes, show='headings')
 		self.tree.grid(row=3, column=4, rowspan=4, columnspan=2, padx=5, pady=5)
 
@@ -495,6 +496,7 @@ class Page3(tk.Frame):
 
 		self.tree.heading("N°", text="N°", anchor='center')
 		self.tree.column("N°", width=50, anchor='center')
+		self.tree.column("Nb machine", width=80, anchor='center')
 		for col in colonnes:
 			if col == "N°":
 				continue
