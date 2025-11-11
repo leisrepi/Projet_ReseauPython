@@ -503,7 +503,21 @@ class Page3(tk.Frame):
 			self.tree.heading(col, text=col)
 			self.tree.column(col, anchor='center')
 
+class PopupSaveAndLoad(tk.Toplevel):
 
+	def __init__(self, parent, controller):
+		super().__init__(parent, pady=10)
+		self.controller = controller
+		self.title("Fenêtre Popup")
+		self.geometry("300x150")
+		self.resizable(False, False)
+
+		# Empêche d'interagir avec la fenêtre principale tant que la popup est ouverte
+		self.grab_set()
+
+		# Contenu de la popup
+		label = tk.Label(self, text="Ceci est une popup personnalisée.", pady=10)
+		label.pack()
 
 class PageSelector(tk.Frame):
 	def __init__(self, parent, controller):

@@ -38,6 +38,9 @@ class GUIController:
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
         self.root.title("NO_NAME_SET")
         self.view = GUIHandler.LoginMenu(self)
+        #TODO : supprimer cette variable une fois le systeme de popup fonctionnel
+        self.popup = GUIHandler.PopupSaveAndLoad(self.root, self)
+        #
         self.session = None
         self.run()
     
