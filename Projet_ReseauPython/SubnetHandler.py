@@ -49,7 +49,7 @@ def calculate_step(nb_machines):
     return 
 
 # Vérification de la possibilité de faire une découpe classique
-def verify_subnetting_possibility(network, nb_machines_list):
+def verify_subnetting_possibility(network, nb_machines, nb_subnet):
     """Vérifie si une découpe classique est possible
 
         Args: 
@@ -59,8 +59,8 @@ def verify_subnetting_possibility(network, nb_machines_list):
         Returns: 
             true si une découpe classique est possible, false sinon
     """
-    print("Decoupe classique possible ?:",(network.num_addresses)/len(nb_machines_list), ">=", calculate_nb_machines_max(nb_machines_list))
-    return (network.num_addresses)/len(nb_machines_list) >= calculate_nb_machines_max(nb_machines_list)
+    #print("Decoupe classique possible ?:",(network.num_addresses)/len(nb_machines_list), ">=", calculate_nb_machines_max(nb_machines_list))
+    return (network.num_addresses)/nb_subnet >= nb_machines
 
 # Vérification de la possibilité de faire une découpe VLSM
 def verify_vlsm_possibility(network, nb_machines_list):
@@ -82,7 +82,7 @@ def verify_vlsm_possibility(network, nb_machines_list):
     return network.num_addresses >= tot_machines
 
 # Calcul des sous-réseaux (renvoie une liste de liste contenant les informations des sous-réseaux [adresse_sous_reseau, adresse_broadcast, premiere_ip, derniere_ip])
-def calculate_subnetting(network, nb_machines_list):
+def calculate_subnetting(network, nb_machines, nb_subnet):
     """Calcule les sous-réseaux en fonction du réseau et de la liste du nombre de machines par sous-réseau
 
         Args:
@@ -96,22 +96,20 @@ def calculate_subnetting(network, nb_machines_list):
         Raises:
             TooManyMachinesException : Lève une exception TooManyMachinesException si le nombre de sous-réseaux dépasse 100
     """
-    if(not verify_subnetting_possibility(network, nb_machines_list)):
+    if(not verify_subnetting_possibility(network, nb_machines, nb_subnet)):
         raise ValueError("Découpe classique impossible avec les paramètres fournis.")
-        
-    nb_machines = calculate_nb_machines_max(nb_machines_list)
-    nb_subnet = len(nb_machines_list)
 
     # Liste des hôtes et du nombre d'adresses pour éviter de recalculer à chaque itération
     hosts = list(network.hosts())
     # Nombre d'adresses total dans le réseau
     num_addresses = network.num_addresses
     # Pas entre chaque sous-réseau
-    step = nb_machines - 1
+    step = nb_machines - 1 + 2  # +2 pour l'adresse de réseau et de broadcast
+
 
     # Si le nombre de sous-réseaux est trop grand, on arrête l'opération et on renvoie une exception
     if(nb_subnet > 100):
-        raise TooManyMachinesException("Le nombre de machines par sous-réseau a dépassé la limite (100). Opération annulée.")
+        raise TooManyMachinesException("Le nombre de sous-réseau a dépassé la limite (100). Opération annulée.")
 
 
     increment = 0
@@ -129,18 +127,18 @@ def calculate_subnetting(network, nb_machines_list):
             result[i].append(str(hosts[i + increment - 1]))
 
         # S'il s'agit du dernier sous-réseau, l'adresse de broadcast est l'adresse de broadcast du réseau (list(hosts) ne prends que les adresses utilisables)
-        if((i + increment + nb_machines - 2)  == num_addresses - 2):
+        if((i + increment + nb_machines)  == num_addresses - 2):
             print("Adresse de broadcast :", network.broadcast_address)
             result[i].append(str(network.broadcast_address))
         else:
-            print("Adresse de broadcast :", hosts[(i + increment + nb_machines - 2)])
-            result[i].append(str(hosts[(i + increment + nb_machines - 2)]))
+            print("Adresse de broadcast :", hosts[(i + increment + nb_machines)])
+            result[i].append(str(hosts[(i + increment + nb_machines)]))
         # Première IP
         print("Première IP :", hosts[i + increment])
         result[i].append(str(hosts[i + increment]))
         # Dernière IP
-        print("Dernière IP :", hosts[(i + increment + nb_machines - 3)])
-        result[i].append(str(hosts[(i + increment + nb_machines - 3)]))
+        print("Dernière IP :", hosts[(i + increment + nb_machines - 1)])
+        result[i].append(str(hosts[(i + increment + nb_machines - 1)]))
 
         # Mise à jour de l'incrément pour le prochain sous-réseau
         increment += step
