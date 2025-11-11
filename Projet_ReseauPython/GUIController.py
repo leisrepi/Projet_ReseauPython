@@ -168,8 +168,8 @@ class GUIController:
 
         #list_nb_machines = list(map(int, combobox_list[1:]))
         #TODO : recyclage de fonction, CE n'est PAS DU TOUT PROPRE VOIR SOLIDE !!!!!
-        print(page3.data['nb_max_machines_per_subnet'], page3.data['nb_subnets'])
-        return calculate_subnetting(network, page3.data['nb_max_machines_per_subnet'], page3.data['nb_subnets']), calculate_step(page3.data['nb_max_machines_per_subnet']), network.num_addresses - 2
+        print(page3.data['nb_max_machines_per_subnet'], page3.nb_subnet.get())
+        return calculate_subnetting(network, page3.data['nb_max_machines_per_subnet'], int(page3.nb_subnet.get())), calculate_step(page3.data['nb_max_machines_per_subnet']), network.num_addresses - 2
 
 
 
