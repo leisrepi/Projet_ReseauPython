@@ -306,11 +306,12 @@ class Page3(tk.Frame):
 				self.tree.insert('', 'end', values=ligne)
 			i += 1
 	
+	#TODO
 	def verify_nb_subnet_inputs(self):
 		
 		nb : int = bu.to_int(self.nb_subnet.get())
-		if nb is None or nb <= 0 or nb > 128:
-			messagebox.showerror("Erreur", "Le nombre de sous-réseaux doit être positif et inférieur ou égal à 128.")
+		if nb is None or nb <= 0 or nb > 100:
+			messagebox.showerror("Erreur", "Le nombre de sous-réseaux doit être positif et inférieur ou égal à 100.")
 			return False
 		return True
 
@@ -322,17 +323,16 @@ class Page3(tk.Frame):
 		if not self.verify_nb_subnet_inputs():
 			return
 		nb_reseau_voulu : int = int(self.nb_subnet.get())
-		nb_reseau : int = 16 #TODO hardcoder pour les test
 		nb_machines_max : int = int(self.controller.controller_machine_per_sub_nb(int(self.nb_subnet.get()), self.network_entry.get(), self.mask_entry.get()))
 		response : bool = messagebox.askyesno("Nombre de machines par sous-réseaux", f"Nombre de machine par sous-réseaux calculés : {nb_machines_max}")
 		if response:
 			print("user said yes")
-			self.change_nb_machines_inputs(nb_reseau,nb_reseau_voulu)
+			self.change_nb_machines_inputs(nb_reseau_voulu)
 			pass
 		#nb_subnets = len(result)
 		#self.nb_subnet.delete(0, tk.END)
 		#self.nb_subnet.insert(0, str(nb_subnets))
-	def change_nb_machines_inputs(self, nb_subnets, nb_subnets_voulu : int):
+	def change_nb_machines_inputs(self, nb_subnets : int):
 		#clean_tk_element(self.nb_machine_inputs_container.inner)
 		if len(self.nb_machine_inputs) < nb_subnets: #plus petit, on dois en ajouter:
 			for i in range(len(self.nb_machine_inputs), nb_subnets):
@@ -341,8 +341,6 @@ class Page3(tk.Frame):
 				entry.grid(row=i, column=1, padx=5, pady=5)
 				entry.bind("<Return>", lambda event, widget=entry: self._nb_machine_input_apply_changes(widget))
 				entry.bind("<FocusOut>", lambda event, widget=entry: self._verify_and_inform_every_nb_machine_per_subnet_input())
-				if i >= nb_subnets_voulu:
-					entry.insert(0,"0") 
 				self.nb_machine_inputs.append(entry)
 		else: #plus grand, on dois en retirer:
 			for i in range(nb_subnets, len(self.nb_machine_inputs)):

@@ -20,6 +20,8 @@ from typing import TYPE_CHECKING #pour avoir la docu sans import du module a l'e
 if TYPE_CHECKING:
 	import GUIHandler
 
+
+
 class GUIController:
     _controller = None
     _event = []
@@ -174,11 +176,12 @@ class GUIController:
     def controller_verify_input_group1(self, page3 : GUIHandler.Page3, nb_subnet_voulue, subnet, mask):
         #verification du nombre de sous réseau
         nb_subnet_voulue : int = bu.to_int(nb_subnet_voulue) #c'est normal si c'est deja présent a certain endroit avant l'appel de cette fonction, certain appelant ne le font pas
-        if nb_subnet_voulue is None or nb_subnet_voulue <= 0 or nb_subnet_voulue > 128:
-            msg.showerror("Erreur", "Le nombre de sous-réseaux doit être un entier positif et inférieur ou égal à 128.")
+        if nb_subnet_voulue is None or nb_subnet_voulue <= 0 or nb_subnet_voulue > 100:
+            msg.showerror("Erreur", "Le nombre de sous-réseaux doit être un entier positif et inférieur ou égal à 100.")
             return None
         
-        real_nb_subnet : int = nb_subnet_voulue
+        
+        
         #verification du mask
         try:
             NetworkHandler.validate_mask_format(mask)
@@ -195,14 +198,14 @@ class GUIController:
             return None
         page3.data['nb_max_machines_per_subnet'] = max_machine_per_subnet
         
-        return real_nb_subnet, max_machine_per_subnet
+        return max_machine_per_subnet
 
     def controller_create_number_of_subnets_input(self, page3 : GUIHandler.Page3, nb_subnet_voulue, subnet, mask):
         print(nb_subnet_voulue, subnet, mask)
         #TODO : verifier les entrers utilisateur, retour si erreur, et création des champs
         nb_subnet_voulue : int = bu.to_int(nb_subnet_voulue)
-        real_nb_subnet, max_machine_per_subnet  = self.controller_verify_input_group1(page3, nb_subnet_voulue, subnet, mask)
-        if real_nb_subnet is None:
+        max_machine_per_subnet  = self.controller_verify_input_group1(page3, nb_subnet_voulue, subnet, mask)
+        if max_machine_per_subnet is None:
             return None
         
         page3.data['nb_max_machines_per_subnet'] = max_machine_per_subnet
@@ -211,14 +214,13 @@ class GUIController:
             return None
 
         #TODO : hardcoder
-        page3.change_nb_machines_inputs(real_nb_subnet, nb_subnet_voulue)
+        page3.change_nb_machines_inputs(nb_subnet_voulue)
 
-        #TODO : stocker quelque part le nombre max de machine par sous réseau ? ou le recalculer?
-        # faire en sorte que quand l'utilisateur appuer sur "return" sur un champs, sa le verifie et passe au suivant si correct
+
         page3.nb_machines_per_subnet_label["text"] = "Nombre maximum de machines par sous-réseaux: " + str(max_machine_per_subnet)
-        page3.nb_subnets_label["text"] = "Nombre de sous-réseaux créés: " + str(real_nb_subnet)
+        page3.nb_subnets_label["text"] = "Nombre de sous-réseaux créés: " + str(nb_subnet_voulue)
         page3._verify_and_inform_every_nb_machine_per_subnet_input()
-        return real_nb_subnet #SubnetHandler.calculate_number_of_subnets(nb_subnet, subnet, mask);
+        return nb_subnet_voulue #SubnetHandler.calculate_number_of_subnets(nb_subnet, subnet, mask);
 
     def controller_machine_per_sub_nb(self, nb_subnet, subnet, mask):
         #13 suposont 16 ->
