@@ -508,16 +508,28 @@ class PopupSaveAndLoad(tk.Toplevel):
 	def __init__(self, parent, controller):
 		super().__init__(parent, pady=10)
 		self.controller = controller
-		self.title("Fenêtre Popup")
-		self.geometry("300x150")
-		self.resizable(False, False)
+		self.title("Gestion des découpes")
+		self.geometry("450x450")
+		self.resizable(True, True)
 
 		# Empêche d'interagir avec la fenêtre principale tant que la popup est ouverte
 		self.grab_set()
-
 		# Contenu de la popup
-		label = tk.Label(self, text="Ceci est une popup personnalisée.", pady=10)
-		label.pack()
+		#--------------------------------------
+		# Nom de la découpe
+		tk.Label(self, text="Nom de la découpe", font=P3_FONT).grid(row=0, column=0, pady=10)
+		tk.Entry(self, font=P3_FONT).grid(row=0, column=1, pady=10)
+		#--------------------------------------
+		# Frame scrollable pour le contenu
+		self.scrollable_frame = ScrollableFrame(self)
+		self.scrollable_frame.grid(row=1, column=0, columnspan=3, padx=10, pady=10)
+		tk.Button(self, text="💾", font=P2_FONT).grid(row=0, column=2, pady=10)
+
+		# Chaque découpe sauvegardée sera affichée ici
+		#TODO : remplacer par le contenu dynamique des découpes sauvegardées
+		for i in range(1, 20):
+			tk.Label(self.scrollable_frame.inner, text="Ceci est une fenêtre popup!", font=P3_FONT).grid(row=i, column=0, pady=5)
+			tk.Button(self.scrollable_frame.inner, text="     🗑️", font=P3_FONT).grid(row=i, column=1)
 
 class PageSelector(tk.Frame):
 	def __init__(self, parent, controller):
