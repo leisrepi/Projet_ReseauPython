@@ -97,9 +97,19 @@ class ScrollableFrame(ttk.Frame):
 		self.canvas.bind("<Configure>", self._on_canvas_configure)
 
 		# 5. Molette souris (Windows/Linux). Pour macOS on adapte un tout petit peu.
-		self.canvas.bind_all("<MouseWheel>", self._on_mousewheel)        # Windows / Linux
-		self.canvas.bind_all("<Button-4>", self._on_mousewheel_linux)    # Linux old
-		self.canvas.bind_all("<Button-5>", self._on_mousewheel_linux)    # Linux old
+		self.canvas.bind("<Enter>", self._bind_mousewheel)
+		self.canvas.bind("<Leave>", self._unbind_mousewheel)
+
+	def _bind_mousewheel(self, event=None):
+		# Option 1 (robuste) : bind_all tant que la souris est au-dessus
+		self.canvas.bind_all("<MouseWheel>", self._on_mousewheel)      # Windows/macOS
+		self.canvas.bind_all("<Button-4>", self._on_mousewheel_linux)  # Linux ancien
+		self.canvas.bind_all("<Button-5>", self._on_mousewheel_linux)  # Linux ancien
+
+	def _unbind_mousewheel(self, event=None):
+		self.canvas.unbind_all("<MouseWheel>")
+		self.canvas.unbind_all("<Button-4>")
+		self.canvas.unbind_all("<Button-5>")
 
 	def _on_frame_configure(self, event):
 		# Met à jour la scrollregion = la zone totale scrollable
