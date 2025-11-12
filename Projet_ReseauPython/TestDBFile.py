@@ -4,6 +4,7 @@ if (__name__ == "__main__"):
 
     
     db.create_db()
+    db.insert_user("test","test")
     session = ath.create_session("test", "test")
     print(db.get_all_subnettings_of_user(session))
     db.insert_decoupe(session, "Bonjour", "192.168.0.0","255.255.255.0")
