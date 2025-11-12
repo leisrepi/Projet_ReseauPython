@@ -1,6 +1,7 @@
 import sqlite3 as sq
 import AuthHandler as ath
 import AppException 
+#TODO : Gerer la recuperation pseudo grace a la session dans les méthode.
 
 #Ouverture de la db
 conn = sq.connect('DecoupeUtilisateurDB.db')
