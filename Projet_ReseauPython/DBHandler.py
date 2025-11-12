@@ -69,7 +69,7 @@ def is_user_on_db(pseudo, motdepasse):
     print("L'utilisateur existe dans la db.")
     return answer
     
-def get_user_subnetting(session, pseudo, id_subnetting):
+def get_user_subnetting(session : ath.session,  id_subnetting):
     """ Sert à obtenir la découpe réseau spécifié de l'utilisateur.
     
         Args:
@@ -82,10 +82,10 @@ def get_user_subnetting(session, pseudo, id_subnetting):
     if(ath.verify_session(session) is not True):
         raise AppException.NotAuthentifyException
     #Vérification de l'utilisateur et recherche de sa découpe dans la db
-    cursor.execute(""" SELECT * FROM DecoupeReseau WHERE Pseudo = ? AND IdDR = ? """, (pseudo, id_subnetting))
+    cursor.execute(""" SELECT * FROM DecoupeReseau WHERE Pseudo = ? AND IdDR = ? """, (session.user_name, id_subnetting))
     return cursor.fetchall()
 
-def get_user_specified_subnet(session, pseudo, id_subnetting, numSR):
+def get_user_specified_subnet(session : ath.session, id_subnetting, numSR):
     """ Sert à obtenir le sous-réseaux spécifié de l'utilisateur.
     
         Args:
@@ -98,8 +98,27 @@ def get_user_specified_subnet(session, pseudo, id_subnetting, numSR):
     """
     if(ath.verify_session(session) is not True):
         raise AppException.NotAuthentifyException
-    cursor.execute(""" SELECT * FROM SousReseau WHERE Pseudo = ? AND IdDR = ? AND NumSR = ?""", (pseudo, id_subnetting, numSR))
+    cursor.execute(""" SELECT * FROM SousReseau WHERE Pseudo = ? AND IdDR = ? AND NumSR = ?""", (session.user_name, id_subnetting, numSR))
     return cursor.fetchall()
+
+def get_all_subnettings_of_user(session : ath.session):
+    """ Sert à obtenir tous les découpe-réseaux d'un utilisateur.
+    
+        Args:
+            session (String) : Session de l'utilisateur actif
+        
+        Returns:
+            Renvoie les découpe-réseaux de l'utilisateur. Revoie None si aucune découpe-réseaux n'est trouvé.
+    """
+    if(ath.verify_session(session) is not True):
+        raise AppException.NotAuthentifyException
+    cursor.execute(""" SELECT * FROM DecoupeReseau WHERE Pseudo = ? """, (session.user_name,))
+    data = cursor.fetchall()
+
+    if(data[0] == ""):
+        return None
+    else:
+        return data
 
 def insert_user( pseudo, mdp):
     """ Sert à ajouter un utilisateur à la base de donnée.
@@ -120,7 +139,7 @@ def insert_user( pseudo, mdp):
     conn.commit()   
     print('Utilisateur crée !')
 
-def insert_decoupe(session, nomDecoupe, pseudo, AdresseReseaux, masqueReseaux):
+def insert_decoupe(session : ath.session, nomDecoupe, AdresseReseaux, masqueReseaux):
     """ Sert à ajouter une découpe à l'utilisateur spécifié.
     
         Args:
@@ -139,15 +158,15 @@ def insert_decoupe(session, nomDecoupe, pseudo, AdresseReseaux, masqueReseaux):
     """
     if(ath.verify_session(session) is not True):
         raise AppException.NotAuthentifyException
-    if(nomDecoupe is None or pseudo is None or AdresseReseaux is None or masqueReseaux is None):
+    if(nomDecoupe is None or session.pseudo is None or AdresseReseaux is None or masqueReseaux is None):
         print("Un des champs est manquant !")
         return False
     
-    cursor.execute("Insert into DecoupeReseau(IdDR, Pseudo, AdresseIP, Masque) values(?, ?, ?, ?)",(nomDecoupe,pseudo, AdresseReseaux,masqueReseaux,))
+    cursor.execute("Insert into DecoupeReseau(IdDR, Pseudo, AdresseIP, Masque) values(?, ?, ?, ?)",(nomDecoupe,session.user_name, AdresseReseaux,masqueReseaux,))
     conn.commit()
     print("insertion de la decoupe effectue")
 
-def insert_sous_reseau(session, numSR, nbMachine, nomDecoupe, pseudo):
+def insert_sous_reseau(session : ath.session, numSR, nbMachine, nomDecoupe):
     """ Sert à ajouter une découpe à l'utilisateur spécifié.
     
         Args:
@@ -165,10 +184,10 @@ def insert_sous_reseau(session, numSR, nbMachine, nomDecoupe, pseudo):
     """
     if(ath.verify_session(session) is not True):
         raise AppException.NotAuthentifyException
-    if(numSR is None or nbMachine is None or nomDecoupe is None or pseudo is None):
+    if(numSR is None or nbMachine is None or nomDecoupe is None or session.user_name is None):
         print("Un des champs est manquant !")
         return False
-    cursor.execute("Insert into SousReseau(NumSR, NbMachine, IdDR, Pseudo) values(?, ?, ?, ?)",(numSR, nbMachine, nomDecoupe, pseudo,))
+    cursor.execute("Insert into SousReseau(NumSR, NbMachine, IdDR, Pseudo) values(?, ?, ?, ?)",(numSR, nbMachine, nomDecoupe, session.user_name,))
     conn.commit()
     print("Sous-réseaux creer")
 
