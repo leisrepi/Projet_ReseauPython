@@ -40,7 +40,7 @@ def create_db():
     ''')
 
     conn.commit()
-    print("DB créer")
+    #print("DB créer")
 
 def is_user_on_db(pseudo, motdepasse):
     """ Sert à vérifier si un utilisateur est déjà dans la base de donnée.
@@ -50,7 +50,7 @@ def is_user_on_db(pseudo, motdepasse):
             motdepasse (String) : Mot de passe lié a l'utilisateur.
         
         Returns:
-            Renvoie True si l'utilisateur existe ou False si il n'éxiste pas.
+            out: Renvoie True si l'utilisateur existe ou False si il n'éxiste pas.
     """
     
     if(pseudo is None or motdepasse is None):
@@ -63,10 +63,10 @@ def is_user_on_db(pseudo, motdepasse):
     try:
         answer = ath.is_password_correct(motdepasse, hashedMDP[0])
     except:
-        print("L'utilisateur n'existe pas dans la db.")
+        #print("L'utilisateur n'existe pas dans la db.")
         return False
     
-    print("L'utilisateur existe dans la db.")
+    #print("L'utilisateur existe dans la db.")
     return answer
     
 def get_user_subnetting(session : ath.session,  id_subnetting):
@@ -77,7 +77,9 @@ def get_user_subnetting(session : ath.session,  id_subnetting):
             id_subnetting (String) : Nom de la découpe du réseau.
         
         Returns:
-            Renvoie la découpe réseau de l'utilisateur.
+            out: Renvoie la découpe réseau de l'utilisateur.
+        Raises:
+            AppException.NotAuthentifyException : si la session est échue.
     """
     if(ath.verify_session(session) is not True):
         raise AppException.NotAuthentifyException
@@ -92,9 +94,12 @@ def get_user_specified_subnet(session : ath.session, id_subnetting, numSR):
             pseudo (String) : Pseudo de l'utilisateur.
             id_subnetting (String) : Nom de la découpe du réseau.
             numSR (int) : Numéro du sous-réseaux.
-        
+
         Returns:
-            Renvoie le sous-réseaux de la découpe spécifié.
+            out: Renvoie le sous-réseaux de la découpe spécifié.
+
+        Raises:
+            AppException.NotAuthentifyException : si la session est échue.
     """
     if(ath.verify_session(session) is not True):
         raise AppException.NotAuthentifyException
@@ -108,7 +113,11 @@ def get_all_subnettings_of_user(session : ath.session):
             session (String) : Session de l'utilisateur actif
         
         Returns:
-            Renvoie les découpe-réseaux de l'utilisateur. Revoie None si aucune découpe-réseaux n'est trouvé.
+            out: Renvoie les découpe-réseaux de l'utilisateur. Revoie None si aucune découpe-réseaux n'est trouvé.
+        
+        Raises:
+            sqlite3.IntegrityError : si la decoupe existe déjà.
+            AppException.NotAuthentifyException : si la session est échue. 
     """
     if(ath.verify_session(session) is not True):
         raise AppException.NotAuthentifyException
@@ -129,16 +138,20 @@ def insert_user( pseudo, mdp):
             mdp (String) : Mot de passe lié a l'utilisateur.
         
         Returns:
-            Aucun retour (Void method)
+            out: Aucun retour (Void method)
+
+        Raises:
+            sqlite3.IntegrityError : si l'utilisateur existe déjà.
+            AppException.UserAlreadyInDBException : si l'utilisateur existe déjà.
     """
     if(is_user_on_db(pseudo, mdp) is not False):
-        print("Refusé ! l'utilisateur existe deja .")
+        #print("Refusé ! l'utilisateur existe deja.")
         return AppException.UserAlreadyInDBException
 
     mdp = ath.password_encrypt(mdp)
     cursor.execute("insert into Utilisateur(pseudo, MotDePasse) values (?, ?)", (pseudo, mdp))
     conn.commit()   
-    print('Utilisateur crée !')
+    #print('Utilisateur crée !')
 
 def insert_decoupe(session : ath.session, nomDecoupe, AdresseReseaux, masqueReseaux):
     """ Sert à ajouter une découpe à l'utilisateur spécifié.
@@ -152,20 +165,21 @@ def insert_decoupe(session : ath.session, nomDecoupe, AdresseReseaux, masqueRese
             masqueReseaux (String) : Masque du réseau.
 
         Returns:
-            False si un ou plusieurs champ(s) est/sont manquant(s). Si la méthode ne renvoie rien c'est qu'aucune erreur n'a été commise.
+            out: False si un ou plusieurs champ(s) est/sont manquant(s). Si la méthode ne renvoie rien c'est qu'aucune erreur n'a été commise.
         
-        Raise:
-            Peut lever l'exception NotAuthentifyException si la session est mauvaise.
+        Raises:
+            sqlite3.IntegrityError : si la decoupe existe déjà.
+            AppException.NotAuthentifyException : si la session est échue.
     """
     if(ath.verify_session(session) is not True):
         raise AppException.NotAuthentifyException
     if(nomDecoupe is None or session.user_name is None or AdresseReseaux is None or masqueReseaux is None):
-        print("Un des champs est manquant !")
+        #print("Un des champs est manquant !")
         return False
     
     cursor.execute("Insert into DecoupeReseau(IdDR, Pseudo, AdresseIP, Masque) values(?, ?, ?, ?)",(nomDecoupe,session.user_name, AdresseReseaux,masqueReseaux,))
     conn.commit()
-    print("insertion de la decoupe effectue")
+    #print("insertion de la decoupe effectue")
 
 def insert_sous_reseau(session : ath.session, numSR, nbMachine, nomDecoupe):
     """ Sert à ajouter une découpe à l'utilisateur spécifié.
@@ -178,10 +192,11 @@ def insert_sous_reseau(session : ath.session, numSR, nbMachine, nomDecoupe):
             pseudo (String) : Pseudo de l'utilisateur.
             
         Returns:
-            False si un ou plusieurs champ(s) est/sont manquant(s). La méthode ne renvoie rien si aucune erreur n'a été commise.
+            out: False si un ou plusieurs champ(s) est/sont manquant(s). La méthode ne renvoie rien si aucune erreur n'a été commise.
         
-        Raise:
-            Peut lever l'exception NotAuthentifyException si la session est mauvaise.
+        Raises:
+            sqlite3.IntegrityError : si le sous-réseaux existe déjà.
+            AppException.NotAuthentifyException : si la session est échue.
     """
     if(ath.verify_session(session) is not True):
         raise AppException.NotAuthentifyException
@@ -190,7 +205,7 @@ def insert_sous_reseau(session : ath.session, numSR, nbMachine, nomDecoupe):
         return False
     cursor.execute("Insert into SousReseau(NumSR, NbMachine, IdDR, Pseudo) values(?, ?, ?, ?)",(numSR, nbMachine, nomDecoupe, session.user_name,))
     conn.commit()
-    print("Sous-réseaux creer")
+    #print("Sous-réseaux creer")
 
 def delete_user(user):
     cursor.execute("DELETE FROM Utilisateur WHERE Pseudo = ?", (user,))
