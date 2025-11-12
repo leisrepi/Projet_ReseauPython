@@ -112,8 +112,7 @@ def get_all_subnettings_of_user(session : ath.session):
     """
     if(ath.verify_session(session) is not True):
         raise AppException.NotAuthentifyException
-    '''if(is_user_on_db(session.user_name, session.)):
-        return None'''
+
     cursor.execute(""" SELECT * FROM DecoupeReseau WHERE Pseudo = ? """, (session.user_name,))
     data = cursor.fetchall()
 
