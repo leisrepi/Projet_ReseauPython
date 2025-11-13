@@ -329,15 +329,13 @@ class GUIController:
         page3.show_subnetting_result()
 
     def controller_save_subnetting_data(self, page3 : GUIHandler.Page3, subneting_name):
-        
-        
-        
         """
         Sauvegarde les données de découpage en sous-réseaux dans la base de données.
         Args:
             page3 (GUIHandler.Page3): La page 3 de l'interface graphique.
+            subneting_name (str): Le nom de la découpe en sous-réseaux.
         Returns:
-        None
+            None (ou False en cas d'erreur)
         """
         #TODO : retourner des erreurs ou juste un boolean ?
 
