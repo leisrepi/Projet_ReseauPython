@@ -220,7 +220,8 @@ def delete_subnetting( session, subNettingId):
             
             
         Returns:
-            out: void methode, ne retourne rien.        
+            out: False si un ou plusieurs champ(s) est/sont manquant(s). La méthode ne renvoie rien si aucune erreur n'a été commise.
+        
         Raises:
             sqlite3.IntegrityError : si la découpe-réseau n'existe pas.
             AppException.NotAuthentifyException : si la session est échue.
