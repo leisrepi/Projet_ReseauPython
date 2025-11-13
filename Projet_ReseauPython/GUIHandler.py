@@ -414,6 +414,9 @@ class Page3(tk.Frame):
 					input_widget.select_range(0, tk.END)
 					self.nb_machine_inputs_container.scroll_to_widget(input_widget)
 			return False
+		#si input correct, on remet la valeur corrigée (ex: si l'utilisateur a mis des espaces)
+		input_widget.delete(0,tk.END)
+		input_widget.insert(0,input_widget_value)
 		return True
 	
 	def _focus_to_next_nb_machine_input(self,input_widget):
