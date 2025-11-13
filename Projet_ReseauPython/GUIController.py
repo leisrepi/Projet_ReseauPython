@@ -1,17 +1,19 @@
 import tkinter as tk
 import GUIHandler
 import AuthHandler
-import DBHandler  
+import DBHandler as db
+import DBHandler
 import time
 import threading
 #TODO : importer le import au complet vue que on ce sert de toutes les fonctions
-import AppException
 from SubnetHandler import calculate_subnetting, calculate_step, calculate_nb_hosts_max
-import SubnetHandler
 import AddressHandler
+from ipaddress import NetmaskValueError, AddressValueError
+from SubnetHandler import calculate_subnetting, calculate_step, calculate_nb_hosts_max
 from NetworkHandler import create_network, define_mask_by_ip_class, validate_mask_format
-from ipaddress import AddressValueError
 import NetworkHandler
+from AppException import InvalidMaskException, MaskNotInRangeException
+import AppException
 
 import BasicUtilies as bu
 import tkinter.messagebox as msg
@@ -142,7 +144,7 @@ class GUIController:
             self.disconnect()
             return
         time_left = self.session.session_expiration_time - time.time()
-        if time_left <= 95:
+        if time_left <= 115:
             self.session = AuthHandler.refresh_session(self.session)
             print("refreshed")
     #TODO : vérifier les entrées utilisateur avant de lancer le calcul (si elles ne sont pas vides et sont valides)
@@ -304,12 +306,13 @@ class GUIController:
 
         #on demande les découpes a la db
         #TODO : bon nom de la fonction a mettre au lieux de valeur hardcode ex : DBHandler.get_all_subnetting_of_user(self.session, data[0])
-        subnetting_data = [["découpe de test", 5 , 1 , "Kevin"],
+        """subnetting_data = [["découpe de test", 5 , 1 , "Kevin"],
                            ["découpe de test", 10 , 2 , "Kevin"],
                            ["découpe de test", 2 , 3 , "Kevin"],
                            ["découpe de test", 6 , 4 , "Kevin"],
                            ["découpe de test", 8 , 5 , "Kevin"],
-                           ] 
+                           ] """
+        subnetting_data = DBHandler.get_all_subnets_of_a_subnetting(self.session, data[0])
         
         if subnetting_data is None:
             msg.showerror("Erreur", "La découpe que vous essayez de charger n'existe pas ou une erreur est survenue lors de la récupération des données.")
@@ -364,7 +367,7 @@ class GUIController:
         #sauvegarde de la découpe réseau
         try:
             #TODO : a modifier, le pseudo sera retirer au merge
-            DBHandler.insert_decoupe(self.session, subneting_name, self.session.user_name, subnet_address, subnet_mask)
+            DBHandler.insert_decoupe(self.session, subneting_name, subnet_address, subnet_mask)
         except Exception as e:
             msg.showerror("Erreur", f"Une erreur est survenue lors de la sauvegarde des données : {e}")
             return
@@ -373,7 +376,7 @@ class GUIController:
         try:
             
             for i in range(len(list_nb_machines)):
-                DBHandler.insert_sous_reseau(self.session, i+1, list_nb_machines[i], subneting_name, self.session.user_name,)
+                DBHandler.insert_sous_reseau(self.session, i+1, list_nb_machines[i], subneting_name)
         except Exception as e:
             msg.showerror("Erreur", f"Une erreur est survenue lors de la sauvegarde des sous-réseaux : {e}")
             #erreur de sauvegarde des sous-réseaux, on supprime la découpe réseau créée précédemment
@@ -385,6 +388,11 @@ class GUIController:
         msg.showinfo("Succès", "Les données de découpage en sous-réseaux ont été sauvegardées avec succès.")
     
         
+    
+    def controller_delete_subnetting(self, subnetting_id):
+        db.delete_subnetting(self.session, subnetting_id)
+        
+    
 '''
 if __name__ == "__main__":
     controller = GUIController()
