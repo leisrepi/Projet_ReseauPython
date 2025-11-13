@@ -5,13 +5,14 @@ import DBHandler as db
 import time
 import threading
 #TODO : importer le import au complet vue que on ce sert de toutes les fonctions
-import AppException
-from SubnetHandler import calculate_subnetting, calculate_step, calculate_nb_machines_max
-import SubnetHandler
+from SubnetHandler import calculate_subnetting, calculate_step, calculate_nb_hosts_max
 import AddressHandler
-from NetworkHandler import create_network
 from ipaddress import NetmaskValueError, AddressValueError
+from SubnetHandler import calculate_subnetting, calculate_step, calculate_nb_hosts_max
+from NetworkHandler import create_network, define_mask_by_ip_class, validate_mask_format
 import NetworkHandler
+from AppException import InvalidMaskException, MaskNotInRangeException
+import AppException
 
 import BasicUtilies as bu
 import tkinter.messagebox as msg
@@ -138,7 +139,7 @@ class GUIController:
             self.disconnect()
             return
         time_left = self.session.session_expiration_time - time.time()
-        if time_left <= 95:
+        if time_left <= 115:
             self.session = AuthHandler.refresh_session(self.session)
             print("refreshed")
     #TODO : vérifier les entrées utilisateur avant de lancer le calcul (si elles ne sont pas vides et sont valides)
@@ -146,7 +147,7 @@ class GUIController:
     def controller_subnetting_calculation(self, page3):
         try:
             network = create_network(page3.network_entry.get(), page3.mask_entry.get())
-        except NetmaskValueError as e:
+        except InvalidMaskException as e:
             tk.messagebox.showerror("Erreur", f"Erreur lors de la création du réseau : {e}")
             return
         except AddressValueError as e:
@@ -167,6 +168,33 @@ class GUIController:
         #TODO : recyclage de fonction, CE n'est PAS DU TOUT PROPRE VOIR SOLIDE !!!!!
         return calculate_subnetting(network, list_nb_machines), calculate_step(page3.data['nb_max_machines_per_subnet']), network.num_addresses - 2
 
+    # dans le cas où l'adresse est en classfull
+    def controller_get_address_info(self, ip, mask):
+        try:
+            validate_mask_format(mask)
+            subnet = create_network(ip, mask)
+        except AddressValueError as e:
+            raise AddressValueError(str(e))
+        except InvalidMaskException as e:
+            raise InvalidMaskException(str(e))
+        except MaskNotInRangeException as e:
+            raise MaskNotInRangeException(str(e))
+        
+        mask = mask.strip()
+        if(mask[0] == "/"):
+            return subnet.network_address, subnet.broadcast_address, None, None
+        
+        classfull_mask = define_mask_by_ip_class(subnet.network_address)
+        
+        if(classfull_mask is None or str(subnet.netmask) < classfull_mask):
+            raise InvalidMaskException("Masque invalide pour cette adresse IP")
+        print("classfull mask : ", classfull_mask)
+        print("subnet mask : ", str(subnet.netmask))
+        if(str(subnet.netmask) == classfull_mask):
+            return subnet.network_address, subnet.broadcast_address, None, None
+        
+        network = create_network(ip, classfull_mask)
+        return network.network_address, network.broadcast_address, subnet.network_address, subnet.broadcast_address 
 
 
     #----------------------------------------fonction page3--------------------------------------------
@@ -247,6 +275,8 @@ class GUIController:
     
     def controller_delete_subnetting(self, subnetting_id):
         db.delete_subnetting(self.session, subnetting_id)
+        
+    
 '''
 if __name__ == "__main__":
     controller = GUIController()
