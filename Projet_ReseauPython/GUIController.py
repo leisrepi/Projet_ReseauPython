@@ -4,9 +4,23 @@ import AuthHandler
 import DBHandler  
 import time
 import threading
+#TODO : importer le import au complet vue que on ce sert de toutes les fonctions
+import AppException
 from SubnetHandler import calculate_subnetting, calculate_step, calculate_nb_hosts_max
+import SubnetHandler
+import AddressHandler
 from NetworkHandler import create_network, define_mask_by_ip_class, validate_mask_format
 from ipaddress import AddressValueError
+import NetworkHandler
+
+import BasicUtilies as bu
+import tkinter.messagebox as msg
+
+from ipaddress import IPv4Address
+from typing import TYPE_CHECKING #pour avoir la docu sans import du module a l'execution (car pas besoin et importation circulaire)
+if TYPE_CHECKING:
+	import GUIHandler
+
 from AppException import InvalidMaskException, MaskNotInRangeException
 
 
@@ -128,12 +142,12 @@ class GUIController:
             self.disconnect()
             return
         time_left = self.session.session_expiration_time - time.time()
-        if time_left <= 115:
+        if time_left <= 95:
             self.session = AuthHandler.refresh_session(self.session)
             print("refreshed")
     #TODO : vérifier les entrées utilisateur avant de lancer le calcul (si elles ne sont pas vides et sont valides)
     #FIXME: modifier calculate_step pour qu'il affiche le bon pas
-    def controller_subnetting_calculation(self, page3):
+    def controller_subnetting_calculation(self, page3 : GUIHandler.Page3):
         try:
             network = create_network(page3.network_entry.get(), page3.mask_entry.get())
         except InvalidMaskException as e:
@@ -143,24 +157,100 @@ class GUIController:
             tk.messagebox.showerror("Erreur", f"Erreur lors de la création du réseau : {e}")
             return
         
-        combobox_list = list(page3.list_machines_combobox["values"])
-        if(len(combobox_list) < 3): # 3 car le premier élément est une chaîne vide
-            tk.messagebox.showerror("Erreur", "Veuillez ajouter au moins 2 nombre de machines.")
-            return
-        # On ignore le premier élément qui est une chaîne vide
-        list_nb_machines = list(map(int, combobox_list[1:]))
-        return calculate_subnetting(network, list_nb_machines), calculate_step(calculate_nb_hosts_max(list_nb_machines)), network.num_addresses - 2
-    
-    # def controller_get_address_info(self, ip, mask):
-    #     try:
-    #         network = create_network(ip, mask)
-    #     except AddressValueError:
-    #         raise AddressValueError("Adresse IP non valide")
-    #     except InvalidMaskException:
-    #         raise InvalidMaskException("Masque invalide")
         
-    #     return network.network_address, network.broadcast_address
+        # on transforme les input en liste d'entiers
+        list_nb_machines = []
+        for input in page3.nb_machine_inputs:
+            if bu.to_int(input.get()) is None or bu.to_int(input.get()) < 0:
+                #TODO : mettre la bonne exception   
+                raise AppException.InvalidInputException("Invalid number of machines input.")
+                #tk.messagebox.showerror("Erreur", "Veuillez entrer des entiers positifs pour le nombre de machines par sous-réseau.")
+            list_nb_machines.append(bu.to_int(input.get()))
 
+        #list_nb_machines = list(map(int, combobox_list[1:]))
+        #TODO : recyclage de fonction, CE n'est PAS DU TOUT PROPRE VOIR SOLIDE !!!!!
+        print(page3.data['nb_max_machines_per_subnet'], page3.nb_subnet.get())
+        return calculate_subnetting(network, page3.data['nb_max_machines_per_subnet'], int(page3.nb_subnet.get())), calculate_step(page3.data['nb_max_machines_per_subnet']), network.num_addresses - 2
+
+
+
+    #----------------------------------------fonction page3--------------------------------------------
+    
+    def controller_verify_input_group1(self, page3 : GUIHandler.Page3, nb_subnet_voulue, subnet, mask):
+        #verification du nombre de sous réseau
+        nb_subnet_voulue : int = bu.to_int(nb_subnet_voulue) #c'est normal si c'est deja présent a certain endroit avant l'appel de cette fonction, certain appelant ne le font pas
+        if nb_subnet_voulue is None or nb_subnet_voulue <= 0 or nb_subnet_voulue > 100:
+            msg.showerror("Erreur", "Le nombre de sous-réseaux doit être un entier positif et inférieur ou égal à 100.")
+            return None
+        
+        #verification du mask
+        try:
+            NetworkHandler.validate_mask_format(mask)
+        except Exception as e:
+            msg.showerror("Erreur", str(e))
+            return None
+
+        #verification du subnet
+          #verif de la validité de l'adresse IP
+        if not AddressHandler.is_ip_valid(subnet):
+            msg.showerror("Erreur", "Le format de l'adresse IP du sous-réseau est invalide.")
+            return None
+
+        max_machine_per_subnet = AddressHandler.calculate_max_host_per_subnet(nb_subnet_voulue, subnet, mask)
+        if max_machine_per_subnet < 2:
+            msg.showerror("Erreur", "Le nombre de sous-réseaux demandé est trop élevé pour le réseau donné.")
+            return None
+        page3.data['nb_max_machines_per_subnet'] = max_machine_per_subnet
+        
+        return max_machine_per_subnet
+
+    def controller_create_number_of_subnets_input(self, page3 : GUIHandler.Page3, nb_subnet_voulue, subnet, mask):
+        print(nb_subnet_voulue, subnet, mask)
+        #TODO : verifier les entrers utilisateur, retour si erreur, et création des champs
+        nb_subnet_voulue : int = bu.to_int(nb_subnet_voulue)
+        max_machine_per_subnet  = self.controller_verify_input_group1(page3, nb_subnet_voulue, subnet, mask)
+        if max_machine_per_subnet is None:
+            return None
+        
+        page3.data['nb_max_machines_per_subnet'] = max_machine_per_subnet
+        #Demander a l'utilisateur si ce nombre de machine maximal lui convient
+        if msg.askyesno("Confirmation", f"Le nombre de machine par sous réseau maximal sera de: {max_machine_per_subnet}. Voulez-vous continuer ?") == False:
+            return None
+
+        #TODO : hardcoder
+        page3.change_nb_machines_inputs(nb_subnet_voulue)
+
+
+        page3.nb_machines_per_subnet_label["text"] = "Nombre maximum de machines par sous-réseaux: " + str(max_machine_per_subnet)
+        page3.nb_subnets_label["text"] = "Nombre de sous-réseaux créés: " + str(nb_subnet_voulue)
+        page3._verify_and_inform_every_nb_machine_per_subnet_input()
+        return nb_subnet_voulue #SubnetHandler.calculate_number_of_subnets(nb_subnet, subnet, mask);
+
+    def controller_machine_per_sub_nb(self, nb_subnet, subnet, mask):
+        #13 suposont 16 ->
+        return AddressHandler.calculate_max_host_per_subnet(nb_subnet, subnet, mask)
+    
+    
+    def controller_fill_empty_machine_per_subnet_input_with_0(self, page3 : GUIHandler.Page3):
+        for input in page3.nb_machine_inputs:
+            if input.get() == "":
+                input.delete(0, tk.END)
+                input.insert(0, "0")
+
+    #oauis c'est long mais au moin je me comprend
+    #va verifier que tout les champs sont remplis, si ce n'est pas le cas il va proposer a l'utilisateur de les remplir avec des 0
+    def controller_verify_and_propose_correction_empty_machine_per_subnet_input(self, page3 : GUIHandler.Page3):
+        for input in page3.nb_machine_inputs:
+            if input.get() == "":
+                user_answer = msg.askyesno("Champs vide détecté", "Un ou plusieurs champs de nombre de machines par sous-réseau sont vides. Voulez-vous les remplir avec 0 ? (non vous amenèra au premier champs vide pour correction)")
+                if user_answer:
+                    self.controller_fill_empty_machine_per_subnet_input_with_0(page3)
+                    return True
+                else:
+                    input.focus_set()
+                    return False
+        return True
+    
     # dans le cas où l'adresse est en classfull
     def controller_get_address_info(self, ip, mask):
         try:

@@ -176,7 +176,7 @@ def delete_user(user):
     conn.commit()
     print('Utilisateur supprimer !')
 
-def delete_Subnetting( session : ath.session , subNetting):
+def delete_Subnetting(session, subNetting):
     cursor.execute("DELETE FROM DecoupeReseau where Pseudo = ? and IdDR = ?",( session.user_name, subNetting,))
     conn.commit()
     print("Découpe réseau effacer")

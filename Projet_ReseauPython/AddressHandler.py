@@ -5,6 +5,7 @@
 import AppException
 import math
 from ipaddress import IPv4Address, IPv4Network, AddressValueError
+import math
 
 # --------------------------------------
 #             Fonctions
@@ -43,10 +44,8 @@ def create_ip_address(ip_string):
         return IPv4Address(ip_string)
     except AddressValueError:
         raise AddressValueError("Adresse IP non valide")
+  
     
-import math
-from ipaddress import IPv4Network
-
 def calculate_max_host_per_subnet(subnetNumber, subnet, mask):
 
     subnetNumber = int(subnetNumber)

@@ -7,9 +7,78 @@ from AppException import InvalidMaskException, MaskNotInRangeException, SNMaskEr
 from AddressHandler import is_ip_valid, create_ip_address
 import re
 
+import re
 # --------------------------------------
 #             Fonctions
 # --------------------------------------
+
+# Vérification de la validité du masque.
+def validate_mask_format(mask, *, classful: bool = None):
+    """Vérifie le format d'un masque (classful ou classless ou indifférent)
+
+    Args:
+        mask (string): chaîne de caractères du masque
+        classful (bool, optional): Indique si le masque doit être vérifié en classful (True), classless (False) ou indifférent (None). Par défaut à None.
+
+    Raises:
+        InvalidMaskException : Si le masque est invalide
+        MaskNotInRangeException : Si le masque n'est pas dans les bornes autorisées (/8 à /29 = 255.0.0.0 à 255.255.255.248)
+    """
+
+    # Vérification du format du masque (peut importe si classful ou classless)
+    if(classful is None):
+        if(mask[0] != "/"):
+            mask = "/" + mask
+        try:
+            network = IPv4Network(("0.0.0.0"+mask), strict=False) 
+            if(not network.num_addresses in range(8, 16777217)): # entre /8 et /29
+                raise MaskNotInRangeException("Masque ne se trouve pas entre /8 et /29")
+        except NetmaskValueError:
+            raise InvalidMaskException("Masque invalide")  
+        
+    # Vérification du classful    
+    elif(classful):
+    
+        # Vérification du format du masque (par regex)
+        if(not re.search(r"^((255|254|252|248|240|224|192|128|0)\.){3}(255|254|252|248|240|224|192|128|0)$", mask)):
+            raise InvalidMaskException("Masque invalide")
+        
+        # Vérification des bornes du masque (entre le /8 et le /29)
+        if(mask < "255.0.0.0" or mask > "255.255.255.248"):
+            raise MaskNotInRangeException("Masque ne se trouve pas entre 255.0.0.0 et 255.255.255.248")
+        
+        # Vérification des octets du masque (par exemple refuser 255.0.128.0)
+        mask_parts = [int(part) for part in mask.split(".")]
+        for i in range(4):
+            # S'il s'agit du premier octet, on vérifie s'il est différent de 255 (car 255.0.0.0 est le masque minimal), 
+            # sinon on initialise la variable previous_byte
+            if(i == 0):
+                if(mask_parts[i] != 255):
+                    raise InvalidMaskException("Masque invalide")
+                else:
+                    previous_byte = mask_parts[i]
+                    continue
+            
+            # Pour les octets suivants, on vérifie si l'octet précédent n'est pas égal à 255, 
+            # que l'octet actuel soit égal à 0 (car 255.x.0.x n'est pas valide)
+            if(previous_byte != 255 and mask_parts[i] != 0):
+                raise InvalidMaskException("Masque invalide")
+            
+            previous_byte = mask_parts[i]
+
+    # Vérification du classless
+    else:   
+        if(mask[0] != "/"):
+            raise InvalidMaskException("Masque invalide")
+        try:
+            prefix_length = int(mask[1:])
+            if(prefix_length < 0 or prefix_length > 32):
+                raise InvalidMaskException("Masque invalide")
+            if(prefix_length < 8 or prefix_length > 29):
+                raise MaskNotInRangeException("Masque ne se trouve pas entre /8 et /29")
+        except ValueError:
+            raise InvalidMaskException("Masque invalide")
+
 
 #Retourne l'Ip du réseau et son adresse broadcast et le sous réseaux si possible
 def get_network_information_from_ip_address_and_mask(IpAddress, SNMask):

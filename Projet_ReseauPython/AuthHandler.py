@@ -31,7 +31,7 @@ def _session_process(connexion):
         (None) : ne retourne rien
     """
     # --- CONFIG ---
-    SESSION_LIFETIME = 130  # durée de vie en secondes (ici 10s pour tester)
+    SESSION_LIFETIME = 100  # durée de vie en secondes (ici 10s pour tester)
     SECRET_KEY = secrets.token_bytes(32)  # clé secrète de 32 bytes (32 * 8 = 256 bits) => très grand pour être sûr qu'elle ne soit pas trouvée par force brute
     #pour la trouver il faudrait faire 2^256 essais en moyenne, ce qui est infaisable (1,1579208923731619542357098500869e+77 essais) 
     # ou si on calcul a un milliard de milliard de possibilite / s (10^15/s) ~3.7×10⁵⁴ ans (≈ 2.7×10⁴⁴ fois l’âge de l’univers).
