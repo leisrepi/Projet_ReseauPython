@@ -504,8 +504,8 @@ class Page3(tk.Frame):
 		if info["row"] + 1 < len(self.nb_machine_inputs):
 			self.nb_machine_inputs[info["row"]+1].focus_set()
     	
-	def _show_save_and_load_window(self):
-		PopupSaveAndLoad(self.controller.root, self.controller)
+	def show_save_and_load_window(self):
+		PopupSaveAndLoad(self.controller.root, self.controller, self)
 
 	def __init__(self , parent, controller : 'GUIController.GUIController'):
 
@@ -522,7 +522,7 @@ class Page3(tk.Frame):
 		self.data['subneting_name'] = None
 		# #--------------------------------------|Découpage en sous-réseaux|--------------------------------------
 		# Bouton pour ouvrir la fenêtre de load and save les découpes 
-		tk.Button(self, text="Sauvegarder ou charger une découpe", font=P2_FONT, command=self._show_save_and_load_window).grid(row=0, column=0, padx=5, pady=5, sticky="e")
+		tk.Button(self, text="Sauvegarder ou charger une découpe", font=P2_FONT, command=self.show_save_and_load_window).grid(row=0, column=0, padx=5, pady=5, sticky="e")
 		label = tk.Label(self, text="Découpe en sous-réseaux", font=H2_FONT).grid(row=0, column=1, padx=5, pady=5, sticky="e", columnspan=4)
 		
 		
@@ -570,10 +570,6 @@ class Page3(tk.Frame):
 		
 
 		tk.Button(self, text="Calculer la découpe", command=self.show_subnetting_result, font=P2_FONT, borderwidth=1, relief="solid").grid(row=7, column=0, columnspan=2, padx=5, pady=5)
-		#Boutton de debug
-		tmp_data = ["coucou2", "test", "192.168.0.1", "/24"]
-		tk.Button(self, text="Load fake découpe", command= lambda : self.controller.controller_load_subnetting_data(self,tmp_data), font=P2_FONT, borderwidth=1, relief="solid").grid(row=8, column=0, padx=5, pady=5)
-		tk.Button(self, text="save fake découpe", command= lambda : self.controller.controller_save_subnetting_data(self, "coucou2"), font=P2_FONT, borderwidth=1, relief="solid").grid(row=9, column=0, padx=5, pady=5)
 		
 		#-----------------------------------------------------------------------------------------------
 
@@ -607,11 +603,44 @@ class Page3(tk.Frame):
 
 class PopupSaveAndLoad(tk.Toplevel):
 
-	def __init__(self, parent, controller):
+	def save_subnetting_data(self, page3, subnetting_name):
+		self.controller.controller_save_subnetting_data(page3, subnetting_name)
+		for widget in self.scrollable_frame.inner.winfo_children():
+			widget.destroy()
+		self.show_subnettings_in_popup(page3)
+
+	def load_subnetting_data(self, page3, subnetting):
+		self.controller.controller_load_subnetting_data(page3, subnetting)
+		self.destroy()
+
+	def delete_subnetting(self, page3, subnetting_name):
+
+		self.controller.controller_delete_subnetting(subnetting_name)
+		
+		for widget in self.scrollable_frame.inner.winfo_children():
+			widget.destroy()
+		self.show_subnettings_in_popup(page3)
+		
+	def show_subnettings_in_popup(self, page3):
+		# Chaque découpe sauvegardée sera affichée ici
+		subnettings = db.get_all_subnettings_of_user(self.controller.session)
+		if(subnettings is None):
+			return
+	
+		for i in range(len(subnettings)):
+			# subnettings[i][0] représente le nom de la découpe i
+			print("Découpe: ", subnettings[i][0])
+			tk.Label(self.scrollable_frame.inner, text=subnettings[i][0], font=P3_FONT).grid(row=i+1, column=0, pady=5)
+			#lambda index=i --> afin que i soit sauvegardé en même temps que l'event (sinon i sera égal au dernier indice de la liste)
+			tk.Button(self.scrollable_frame.inner, text="📂", font=P3_FONT, command= lambda index=i: self.load_subnetting_data(page3, subnettings[index])).grid(row=i+1, column=1)
+			print()
+			tk.Button(self.scrollable_frame.inner, text="     🗑️", font=P3_FONT, command= lambda index=i: self.delete_subnetting(page3, subnettings[index][0])).grid(row=i+1, column=2)
+		
+	def __init__(self, parent, controller  : 'GUIController.GUIController', page3):
 		super().__init__(parent, pady=10)
 		self.controller = controller
 		self.title("Gestion des découpes")
-		self.geometry("450x450")
+		self.geometry("750x750")
 		self.resizable(True, True)
 
 		# Empêche d'interagir avec la fenêtre principale tant que la popup est ouverte
@@ -620,21 +649,17 @@ class PopupSaveAndLoad(tk.Toplevel):
 		#--------------------------------------
 		# Nom de la découpe
 		tk.Label(self, text="Nom de la découpe", font=P3_FONT).grid(row=0, column=0, pady=10)
-		tk.Entry(self, font=P3_FONT).grid(row=0, column=1, pady=10)
+		subnetting_entry = tk.Entry(self, font=P3_FONT)
+		subnetting_entry.grid(row=0, column=1, pady=10)
+		tk.Button(self, text="💾", font=P2_FONT, command=lambda : self.save_subnetting_data(page3, subnetting_entry.get())).grid(row=0, column=2, pady=10)
 		#--------------------------------------
 		# Frame scrollable pour le contenu
 		self.scrollable_frame = ScrollableFrame(self)
 		self.scrollable_frame.grid(row=1, column=0, columnspan=3, padx=10, pady=10)
-		tk.Button(self, text="💾", font=P2_FONT).grid(row=0, column=2, pady=10)
+		
+		self.show_subnettings_in_popup(page3)
 
-		# Chaque découpe sauvegardée sera affichée ici
-		#TODO : remplacer par le contenu dynamique des découpes sauvegardées
-		subnettings = db.get_all_subnettings_of_user(self.controller.session)
-		for i in range(len(subnettings)):
-			# subnettings[i][0] représente le nom de la découpe i
-			tk.Label(self.scrollable_frame.inner, text=subnettings[i][0], font=P3_FONT).grid(row=i+1, column=0, pady=5)
-			#lambda index=i --> afin que i soit sauvegardé en même temps que l'event (sinon i sera égal au dernier indice de la liste)
-			tk.Button(self.scrollable_frame.inner, text="     🗑️", font=P3_FONT, command= lambda index=i: self.controller.controller_delete_subnetting(subnettings[index][0])).grid(row=i+1, column=1)
+
 
 class PageSelector(tk.Frame):
 	def __init__(self, parent, controller):
