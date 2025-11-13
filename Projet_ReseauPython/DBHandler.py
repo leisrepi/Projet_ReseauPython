@@ -7,6 +7,14 @@ conn = sq.connect('DecoupeUtilisateurDB.db')
 cursor = conn.cursor()
 cursor.execute("PRAGMA foreign_keys = ON;")
 
+#TODO supprimer la fonction lors du merge
+def delete_subnetting(session, subnetting_id):
+    print(subnetting_id ,"supprimé")
+    
+#TODO supprimer la fonction lors du merge
+def get_all_subnettings_of_user(session):
+    return [["Découpe1", "Jean", "192.168.0.1", "255.255.255.0"], ["Découpe2", "Jean", "192.168.0.2", "255.255.255.0"], ["Découpe3", "Jean", "192.168.0.3", "255.255.255.0"]]
+
 def create_db():
     
     # Création des tables requises si non-existantes

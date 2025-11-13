@@ -1,5 +1,6 @@
 import tkinter as tk
 import BasicUtilies as bu
+import DBHandler as db
 from tkinter import messagebox, ttk
 
 from typing import TYPE_CHECKING #pour avoir la docu sans import du module a l'execution (car pas besoin et importation circulaire)
@@ -413,7 +414,8 @@ class Page3(tk.Frame):
 		if info["row"] + 1 < len(self.nb_machine_inputs):
 			self.nb_machine_inputs[info["row"]+1].focus_set()
     	
-		
+	def _show_save_and_load_window(self):
+		PopupSaveAndLoad(self.controller.root, self.controller)
 
 	def __init__(self , parent, controller : 'GUIController.GUIController'):
 
@@ -428,7 +430,9 @@ class Page3(tk.Frame):
 		self.data['network'] = None
 		self.data['mask'] = None
 		# #--------------------------------------|Découpage en sous-réseaux|--------------------------------------
-		label = tk.Label(self, text="Découpe en sous-réseaux", font=H2_FONT).grid(row=0, column=0, padx=5, pady=5, sticky="e", columnspan=5)
+		# Bouton pour ouvrir la fenêtre de load and save les découpes 
+		tk.Button(self, text="Sauvegarder ou charger une découpe", font=P2_FONT, command=self._show_save_and_load_window).grid(row=0, column=0, padx=5, pady=5, sticky="e")
+		label = tk.Label(self, text="Découpe en sous-réseaux", font=H2_FONT).grid(row=0, column=1, padx=5, pady=5, sticky="e", columnspan=4)
 		
 		
 		# #-----------------------------------------------------------------------------------------------
@@ -527,9 +531,12 @@ class PopupSaveAndLoad(tk.Toplevel):
 
 		# Chaque découpe sauvegardée sera affichée ici
 		#TODO : remplacer par le contenu dynamique des découpes sauvegardées
-		for i in range(1, 20):
-			tk.Label(self.scrollable_frame.inner, text="Ceci est une fenêtre popup!", font=P3_FONT).grid(row=i, column=0, pady=5)
-			tk.Button(self.scrollable_frame.inner, text="     🗑️", font=P3_FONT).grid(row=i, column=1)
+		subnettings = db.get_all_subnettings_of_user(self.controller.session)
+		for i in range(len(subnettings)):
+			# subnettings[i][0] représente le nom de la découpe i
+			tk.Label(self.scrollable_frame.inner, text=subnettings[i][0], font=P3_FONT).grid(row=i+1, column=0, pady=5)
+			#lambda index=i --> afin que i soit sauvegardé en même temps que l'event (sinon i sera égal au dernier indice de la liste)
+			tk.Button(self.scrollable_frame.inner, text="     🗑️", font=P3_FONT, command= lambda index=i: self.controller.controller_delete_subnetting(subnettings[index][0])).grid(row=i+1, column=1)
 
 class PageSelector(tk.Frame):
 	def __init__(self, parent, controller):
