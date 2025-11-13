@@ -69,7 +69,7 @@ def is_user_on_db(pseudo, motdepasse):
     #print("L'utilisateur existe dans la db.")
     return answer
     
-def get_user_subnetting(session : ath.session,  id_subnetting):
+def get_user_subnetting(session,  id_subnetting):
     """ Sert à obtenir la découpe réseau spécifié de l'utilisateur.
     
         Args:
@@ -87,7 +87,7 @@ def get_user_subnetting(session : ath.session,  id_subnetting):
     cursor.execute(""" SELECT * FROM DecoupeReseau WHERE Pseudo = ? AND IdDR = ? """, (session.user_name, id_subnetting))
     return cursor.fetchall()
 
-def get_user_specified_subnet(session : ath.session, id_subnetting, numSR):
+def get_user_specified_subnet(session, id_subnetting, numSR):
     """ Sert à obtenir le sous-réseaux spécifié de l'utilisateur.
     
         Args:
@@ -106,7 +106,7 @@ def get_user_specified_subnet(session : ath.session, id_subnetting, numSR):
     cursor.execute(""" SELECT * FROM SousReseau WHERE Pseudo = ? AND IdDR = ? AND NumSR = ?""", (session.user_name, id_subnetting, numSR))
     return cursor.fetchall()
 
-def get_all_subnettings_of_user(session : ath.session):
+def get_all_subnettings_of_user(session):
     """ Sert à obtenir tous les découpe-réseaux d'un utilisateur.
     
         Args:
@@ -153,7 +153,7 @@ def insert_user( pseudo, mdp):
     conn.commit()   
     #print('Utilisateur crée !')
 
-def insert_decoupe(session : ath.session, nomDecoupe, AdresseReseaux, masqueReseaux):
+def insert_decoupe(session, nomDecoupe, AdresseReseaux, masqueReseaux):
     """ Sert à ajouter une découpe à l'utilisateur spécifié.
     
         Args:
@@ -181,7 +181,7 @@ def insert_decoupe(session : ath.session, nomDecoupe, AdresseReseaux, masqueRese
     conn.commit()
     #print("insertion de la decoupe effectue")
 
-def insert_sous_reseau(session : ath.session, numSR, nbMachine, nomDecoupe):
+def insert_sous_reseau(session, numSR, nbMachine, nomDecoupe):
     """ Sert à ajouter une découpe à l'utilisateur spécifié.
     
         Args:
@@ -212,10 +212,24 @@ def delete_user(user):
     conn.commit()
     print('Utilisateur supprimer !')
 
-def delete_Subnetting( session : ath.session , subNetting):
-    cursor.execute("DELETE FROM DecoupeReseau where Pseudo = ? and IdDR = ?",( session.user_name, subNetting,))
+def delete_subnetting( session, subNettingId):
+    """ Sert à ajouter une découpe à l'utilisateur spécifié.
+    
+        Args:
+            session : Session d'authentification.
+            
+            
+        Returns:
+            out: void methode, ne retourne rien.        
+        Raises:
+            sqlite3.IntegrityError : si la découpe-réseau n'existe pas.
+            AppException.NotAuthentifyException : si la session est échue.
+    """
+    if(ath.verify_session(session) is not True):
+        raise AppException.NotAuthentifyException
+    cursor.execute("DELETE FROM DecoupeReseau where Pseudo = ? and IdDR = ?",( session.user_name, subNettingId,))
     conn.commit()
-    print("Découpe réseau effacer")
+    #print("Découpe réseau effacer")
 
 def close_cursor():
     conn.close()
