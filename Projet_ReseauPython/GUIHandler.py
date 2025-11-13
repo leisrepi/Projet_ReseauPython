@@ -366,14 +366,14 @@ class Page3(tk.Frame):
 
 		#verification adresse réseau et masque
 		if self.controller.controller_verify_input_group1(self,self.nb_subnet.get(),self.network_entry.get(), self.mask_entry.get()) is None:
-			return
+			return False
 
 		#verfication nb machines par sous reseau (si vide)
 		if not self.controller.controller_verify_and_propose_correction_empty_machine_per_subnet_input(self):
-			return
+			return False
 		#verfication nb machines par sous reseau (si valide)
 		if not self._is_nb_machine_per_subnet_inputs_valid():
-			return
+			return False
 
 		# On vide le tableau avant d'afficher les nouveaux résultats
 		self.tree.delete(*self.tree.get_children())
@@ -516,6 +516,7 @@ class Page3(tk.Frame):
 		self.data['nb_machines_per_subnet'] = []
 		self.data['network'] = None
 		self.data['mask'] = None
+		self.data['subneting_name'] = None
 		# #--------------------------------------|Découpage en sous-réseaux|--------------------------------------
 		label = tk.Label(self, text="Découpe en sous-réseaux", font=H2_FONT).grid(row=0, column=0, padx=5, pady=5, sticky="e", columnspan=5)
 		
@@ -523,6 +524,8 @@ class Page3(tk.Frame):
 		# #-----------------------------------------------------------------------------------------------
 		# ============== Inputs groupe 1 ==================
 		# Adresse réseau
+
+		#XXX : l'adresse réseau peu etre incorrect et quand meme accepter (ex: 192.168.0.1 avec un masque /24 ne devrais pas passer?)
 		tk.Label(self, text="Adresse réseau:", font=P2_FONT).grid(row=1, column=0, padx=5, pady=5, sticky="e")
 		self.network_entry = tk.Entry(self, font=P2_FONT, width=20)
 		self.network_entry.bind("<Return>",lambda x : self._apply_changes_from_inputs_of_group1())
@@ -562,7 +565,11 @@ class Page3(tk.Frame):
 		
 
 		tk.Button(self, text="Calculer la découpe", command=self.show_subnetting_result, font=P2_FONT, borderwidth=1, relief="solid").grid(row=7, column=0, columnspan=2, padx=5, pady=5)
-
+		#Boutton de debug
+		tmp_data = ["découpe de test", "Kevin", "192.168.0.1", "/24"]
+		tk.Button(self, text="Load fake découpe", command= lambda : self.controller.controller_load_subnetting_data(self,tmp_data), font=P2_FONT, borderwidth=1, relief="solid").grid(row=8, column=0, padx=5, pady=5)
+		tk.Button(self, text="save fake découpe", command= lambda : self.controller.controller_save_subnetting_data(self, "coucou2"), font=P2_FONT, borderwidth=1, relief="solid").grid(row=9, column=0, padx=5, pady=5)
+		
 		#-----------------------------------------------------------------------------------------------
 
 		# Pas
