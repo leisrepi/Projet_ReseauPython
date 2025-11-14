@@ -363,12 +363,8 @@ class GUIController:
         #+-----------------------+
 
         #sauvegarde de la découpe réseau
-        try:
-            #TODO : a modifier, le pseudo sera retirer au merge
-            DBHandler.insert_decoupe(self.session, subneting_name, subnet_address, subnet_mask)
-        except Exception as e:
-            msg.showerror("Erreur", f"Une erreur est survenue lors de la sauvegarde des données : {e}")
-            return
+        #TODO : a modifier, le pseudo sera retirer au merge
+        DBHandler.insert_decoupe(self.session, subneting_name, subnet_address, subnet_mask)
         
         #sauvegarde des sous-réseaux
         try:
