@@ -608,6 +608,10 @@ class PopupSaveAndLoad(tk.Toplevel):
 		if(subnetting_name==""):
 			messagebox.showerror("Erreur", "Veuillez entrer un nom de découpe")
 			return
+		if(page3.nb_machine_inputs == [] or page3.nb_machine_inputs is None):
+			messagebox.showerror("Erreur", "Vous n'avez pas entré vos nombre de machines dans les sous-réseaux")
+			self.destroy()
+			return
 		try:
 			self.controller.controller_save_subnetting_data(page3, subnetting_name)
 		# Fenêtre pour demander à l'utilisateur s'il veut écraser la découpe déjà existante
