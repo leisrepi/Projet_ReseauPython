@@ -21,7 +21,7 @@ _parent = None #parti du pipe dans le processus principal
 _child = None #parti du pipe dans le processus enfant
 _sign_process : Process = None #processus de signature
 
-
+DUMMY_HASH = b'$2b$16$4MWV0fJkSqmaA8vCFI.xCeKbfSzVfI2qlnH/LhJOojMY38p0E7VQi'
 
 def _session_process(connexion):
     """fonction utiliser par le sous processus, a ne pas appeler hors de celui ci
