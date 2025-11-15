@@ -229,7 +229,7 @@ class Page1(tk.Frame):
 	def __init__(self, parent, controller):
 		super().__init__(parent, pady=10)
 		self.controller = controller
-		label = tk.Label(self, text="Informations d'une adresse", font=H2_FONT)
+		label = tk.Label(self, text="Informations d'une adresse IP", font=H2_FONT)
 		label.grid(row=0, column=0, columnspan=2 , padx=5, pady=5)
 
 		#--------------------------------------
@@ -243,7 +243,7 @@ class Page1(tk.Frame):
 		self.mask_entry = tk.Entry(self, font=P2_FONT, width=20)
 		self.mask_entry.grid(row=1, column=3, padx=5, pady=5)
 
-		tk.Button(self, text="Obtenir les informations de l'adresse", command=self.show_address_info, font=P2_FONT, borderwidth=1, relief="solid").grid(row=1, column=4, padx=5, pady=5)
+		tk.Button(self, text="Obtenir les informations de l'adresse IP", command=self.show_address_info, font=P2_FONT, borderwidth=1, relief="solid").grid(row=1, column=4, padx=5, pady=5)
 		#--------------------------------------
 		# Résultats
 
@@ -331,7 +331,7 @@ class Page2(tk.Frame):
 		ttk.Entry(frame, textvariable=self.reseau_var, width=28).grid(row=1, column=1, sticky="we", **pad)
 		ttk.Label(frame, text="ex: 192.168.3.0 ou 192.168.3.0/26").grid(row=1,column=2, sticky="we",**pad)
 		
-		ttk.Label(frame, text="Masque (optionnel si CIDR) :").grid(row=2, column=0, **pad)
+		ttk.Label(frame, text="Masque (optionnel si classfull) :").grid(row=2, column=0, **pad)
 		self.masque_var = tk.StringVar()
 		ttk.Entry(frame, textvariable=self.masque_var, width=28).grid(row=2, column=1, **pad)
 		ttk.Label(frame, text="ex: 255.255.255.192 ou /26").grid(row=2,column=2,sticky="w")
@@ -522,7 +522,7 @@ class Page3(tk.Frame):
 		self.data['subneting_name'] = None
 		# #--------------------------------------|Découpage en sous-réseaux|--------------------------------------
 		# Bouton pour ouvrir la fenêtre de load and save les découpes 
-		tk.Button(self, text="Sauvegarder ou charger une découpe", font=P2_FONT, command=self.show_save_and_load_window).grid(row=0, column=0, padx=5, pady=5, sticky="e")
+		tk.Button(self, text="Gestion découpe réseau", font=P2_FONT, command=self.show_save_and_load_window).grid(row=0, column=0, padx=5, pady=5, sticky="e")
 		label = tk.Label(self, text="Découpe en sous-réseaux", font=H2_FONT).grid(row=0, column=1, padx=5, pady=5, sticky="e", columnspan=4)
 		
 		
@@ -547,7 +547,7 @@ class Page3(tk.Frame):
 		
 
 		# Nombre de sous-réseaux
-		tk.Label(self, text="Nombre de sous-réseau:", font=P2_FONT).grid(row=3, column=0, padx=5, pady=5, sticky="e")
+		tk.Label(self, text="Nombre de sous-réseaux:", font=P2_FONT).grid(row=3, column=0, padx=5, pady=5, sticky="e")
 		self.nb_subnet = tk.Entry(self, font=P2_FONT, width=20)
 		self.nb_subnet.bind("<Return>",lambda x : self._apply_changes_from_inputs_of_group1())
 		self.nb_subnet.grid(row=3, column=1, columnspan=2, padx=5, pady=5, sticky="w")
@@ -586,7 +586,7 @@ class Page3(tk.Frame):
 		#-----------------------------------------------------------------------------------------------
 
 		# Tableau des sous-réseaux
-		colonnes = ["N°","Nb machine","Adresse de sous-réseau", "Adresse de broadcast", "Première IP", "Dernière IP"]
+		colonnes = ["N°","Nb machines","Adresse de sous-réseau", "Adresse de broadcast", "Première IP", "Dernière IP"]
 		self.tree = ttk.Treeview(self, columns=colonnes, show='headings')
 		self.tree.grid(row=4, column=3, rowspan=4, columnspan=3, padx=5, pady=5)
 
@@ -594,7 +594,7 @@ class Page3(tk.Frame):
 
 		self.tree.heading("N°", text="N°", anchor='center')
 		self.tree.column("N°", width=50, anchor='center')
-		self.tree.column("Nb machine", width=80, anchor='center')
+		self.tree.column("Nb machines", width=80, anchor='center')
 		for col in colonnes:
 			if col == "N°":
 				continue
@@ -698,22 +698,27 @@ class MainApp:
 	def __init__(self, controller):
 		self.controller = controller
 		self.root = controller.root
-		self.root.title("Application Principale")
-		
+		self.root.title("Subnet Maker")
+		#self.root.grid_rowconfigure(0, weight=5)
+		#self.root.grid_rowconfigure(1, weight=0)
+		self.root.grid_rowconfigure(2, weight=5)
+		self.root.grid_columnconfigure(0, weight=5)
+		#self.root.grid_columnconfigure(1, weight=0)
+		self.root.grid_columnconfigure(4, weight=5)
 		# Récupérer la taille de l'écran
-		screen_width = self.root.winfo_screenwidth()
-		screen_height = self.root.winfo_screenheight()
+		screen_width = 1450 #self.root.winfo_screenwidth()
+		screen_height = 700 #self.root.winfo_screenheight()
 		# Définir la taille de la fenêtre
 		self.root.geometry(f"{screen_width}x{screen_height}+0+0")
 
 		header_frame = tk.Frame(self.root)
-		header_frame.grid(row=0, column=0, columnspan=2, sticky="ew")
-		tk.Label(header_frame, text="Bienvenue dans l'application principale!", font=H2_FONT).pack(pady=20)
+		header_frame.grid(row=1, column=1, columnspan=2, sticky="ew")
+		tk.Label(header_frame, text="Bienvenue dans Subnet Maker", font=H2_FONT).pack(pady=20)
 
 		# Creation du systeme de page:
 		# --- Conteneur des pages ---
 		container = tk.Frame(self.root)
-		container.grid(row=1, column=0, sticky="nsew")
+		container.grid(row=2, column=1, sticky="nsew", padx=20, pady=20)
 		container.rowconfigure(0, weight=1)
 		container.columnconfigure(0, weight=1)
 
@@ -726,7 +731,7 @@ class MainApp:
 			frame.grid(row=0, column=0, sticky="nsew")
 
 		self.pageSelector = PageSelector(self.root, self)
-		self.pageSelector.grid(row=2, column=0, sticky="ns")
+		self.pageSelector.grid(row=3, column=1, sticky="ns")
 		self.show_page("Page1")
 
 	def on_button_click(self):
