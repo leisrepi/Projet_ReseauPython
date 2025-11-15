@@ -72,8 +72,9 @@ def is_user_on_db(pseudo, motdepasse):
         if hashedMDP[0] == '':
             hashedMDP[0] = "None"
     except:
-        hashedMDP = []
-        hashedMDP.append(ath.DUMMY_HASH)
+        ath.is_password_correct(motdepasse,ath.DUMMY_HASH) #Si pseudo incorrect, verification avec un hash bidon pour éviter les timing attacks
+        return False
+        
         
     #vérification du mdp et renvoie d'acceptation ou de refus
     try:
