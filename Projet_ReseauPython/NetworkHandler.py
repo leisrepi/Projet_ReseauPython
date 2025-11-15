@@ -133,7 +133,7 @@ def validate_mask_format(mask, *, classful: bool = None):
         try:
             network = IPv4Network(("0.0.0.0"+mask), strict=False) 
             if(not network.num_addresses in range(8, 16777217)): # entre /8 et /29
-                raise MaskNotInRangeException("Masque ne se trouve pas entre /8 et /29")
+                raise MaskNotInRangeException("Masque ne se trouve pas entre /8 et /29 (ou 255.0.0.0 et 255.255.255.248)")
         except NetmaskValueError:
             raise InvalidMaskException("Masque invalide")  
         
