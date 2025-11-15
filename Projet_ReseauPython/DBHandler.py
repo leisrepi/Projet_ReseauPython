@@ -55,9 +55,16 @@ def is_user_on_db(pseudo, motdepasse):
     if(pseudo is None or motdepasse is None):
         print("Aucun pseudo ou mot de passe insérer.")
         return False
+    
     #récuperation du mdp hashé
     cursor.execute(""" SELECT MotDePasse FROM Utilisateur WHERE Pseudo = ? """, (pseudo,))
-    hashedMDP = cursor.fetchone() #--> renvoie un tuple donc hashedMDP[0] est le Bytes que l'on doit envoyer
+    try:
+        hashedMDP = cursor.fetchone() #--> renvoie un tuple donc hashedMDP[0] est le Bytes que l'on doit envoyer
+        
+    except:
+        hashedMDP = []
+        hashedMDP.append(ath.DUMMY_HASH)
+        
     #vérification du mdp et renvoie d'acceptation ou de refus
     try:
         answer = ath.is_password_correct(motdepasse, hashedMDP[0])
