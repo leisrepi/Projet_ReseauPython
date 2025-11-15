@@ -3,12 +3,12 @@ from math import ceil, log2
 def to_int(s: str):
     try:
         return int(s)
-    except ValueError:
+    except Exception:
         return None
 def to_float(s: str):
     try:
         return float(s)
-    except ValueError:
+    except Exception:
         return None
 
 def round_up_to_power_of_two(n):
