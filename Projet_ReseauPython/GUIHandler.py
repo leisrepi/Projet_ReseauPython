@@ -465,7 +465,7 @@ class Page3(tk.Frame):
 			if not self._verify_nb_machine_per_subnet(input_widget, message_on_error=False):
 				if input_widget.get() != "":
 					#TODO: utiliser des couleurs plus douces
-					input_widget.configure({"background": "red"})
+					input_widget.configure({"background": "light coral"})
 				else:
 					input_widget.configure({"background": "white"})
 				#input_widget.delete(0,tk.END)
@@ -607,10 +607,6 @@ class PopupSaveAndLoad(tk.Toplevel):
 	def save_subnetting_data(self, page3, subnetting_name):
 		if(subnetting_name==""):
 			messagebox.showerror("Erreur", "Veuillez entrer un nom de découpe")
-			return
-		if(page3.nb_machine_inputs == [] or page3.nb_machine_inputs is None):
-			messagebox.showerror("Erreur", "Vous n'avez pas entré vos nombre de machines dans les sous-réseaux")
-			self.destroy()
 			return
 		try:
 			self.controller.controller_save_subnetting_data(page3, subnetting_name)

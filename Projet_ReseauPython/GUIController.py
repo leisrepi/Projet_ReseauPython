@@ -244,6 +244,9 @@ class GUIController:
     #oauis c'est long mais au moin je me comprend
     #va verifier que tout les champs sont remplis, si ce n'est pas le cas il va proposer a l'utilisateur de les remplir avec des 0
     def controller_verify_and_propose_correction_empty_machine_per_subnet_input(self, page3 : GUIHandler.Page3):
+        if page3.nb_machine_inputs is None or len(page3.nb_machine_inputs) == 0:
+            msg.showerror("Erreur", "Merci de dabord valider le nombre de sous-réseaux avant de lancer la découpe.")
+            return False
         for input in page3.nb_machine_inputs:
             if input.get() == "":
                 user_answer = msg.askyesno("Champs vide détecté", "Un ou plusieurs champs de nombre de machines par sous-réseau sont vides. Voulez-vous les remplir avec 0 ? (non vous amenèra au premier champs vide pour correction)")
