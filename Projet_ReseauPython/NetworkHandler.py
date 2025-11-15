@@ -3,6 +3,9 @@
 # --------------------------------------
 
 from ipaddress import IPv4Address, IPv4Network, AddressValueError, NetmaskValueError
+import ipaddress
+
+from pyparsing import Optional
 from AppException import InvalidMaskException, MaskNotInRangeException, SNMaskErrorException
 from AddressHandler import is_ip_valid, create_ip_address
 import re
@@ -10,74 +13,6 @@ import re
 # --------------------------------------
 #             Fonctions
 # --------------------------------------
-
-# Vérification de la validité du masque.
-def validate_mask_format(mask, *, classful: bool = None):
-    """Vérifie le format d'un masque (classful ou classless ou indifférent)
-
-    Args:
-        mask (string): chaîne de caractères du masque
-        classful (bool, optional): Indique si le masque doit être vérifié en classful (True), classless (False) ou indifférent (None). Par défaut à None.
-
-    Raises:
-        InvalidMaskException : Si le masque est invalide
-        MaskNotInRangeException : Si le masque n'est pas dans les bornes autorisées (/8 à /29 = 255.0.0.0 à 255.255.255.248)
-    """
-
-    # Vérification du format du masque (peut importe si classful ou classless)
-    if(classful is None):
-        if(mask[0] != "/"):
-            mask = "/" + mask
-        try:
-            network = IPv4Network(("0.0.0.0"+mask), strict=False) 
-            if(not network.num_addresses in range(8, 16777217)): # entre /8 et /29
-                raise MaskNotInRangeException("Masque ne se trouve pas entre /8 et /29")
-        except NetmaskValueError:
-            raise InvalidMaskException("Masque invalide")  
-        
-    # Vérification du classful    
-    elif(classful):
-    
-        # Vérification du format du masque (par regex)
-        if(not re.search(r"^((255|254|252|248|240|224|192|128|0)\.){3}(255|254|252|248|240|224|192|128|0)$", mask)):
-            raise InvalidMaskException("Masque invalide")
-        
-        # Vérification des bornes du masque (entre le /8 et le /29)
-        if(mask < "255.0.0.0" or mask > "255.255.255.248"):
-            raise MaskNotInRangeException("Masque ne se trouve pas entre 255.0.0.0 et 255.255.255.248")
-        
-        # Vérification des octets du masque (par exemple refuser 255.0.128.0)
-        mask_parts = [int(part) for part in mask.split(".")]
-        for i in range(4):
-            # S'il s'agit du premier octet, on vérifie s'il est différent de 255 (car 255.0.0.0 est le masque minimal), 
-            # sinon on initialise la variable previous_byte
-            if(i == 0):
-                if(mask_parts[i] != 255):
-                    raise InvalidMaskException("Masque invalide")
-                else:
-                    previous_byte = mask_parts[i]
-                    continue
-            
-            # Pour les octets suivants, on vérifie si l'octet précédent n'est pas égal à 255, 
-            # que l'octet actuel soit égal à 0 (car 255.x.0.x n'est pas valide)
-            if(previous_byte != 255 and mask_parts[i] != 0):
-                raise InvalidMaskException("Masque invalide")
-            
-            previous_byte = mask_parts[i]
-
-    # Vérification du classless
-    else:   
-        if(mask[0] != "/"):
-            raise InvalidMaskException("Masque invalide")
-        try:
-            prefix_length = int(mask[1:])
-            if(prefix_length < 0 or prefix_length > 32):
-                raise InvalidMaskException("Masque invalide")
-            if(prefix_length < 8 or prefix_length > 29):
-                raise MaskNotInRangeException("Masque ne se trouve pas entre /8 et /29")
-        except ValueError:
-            raise InvalidMaskException("Masque invalide")
-
 
 #Retourne l'Ip du réseau et son adresse broadcast et le sous réseaux si possible
 def get_network_information_from_ip_address_and_mask(IpAddress, SNMask):
@@ -410,9 +345,81 @@ def get_network_address_and_broadcast(reseau_str, masque_str):
     except Exception:
         return None, None
 
+
+def get_class_from_octet(first_octet: int) -> str:
+    """Return the IPv4 class for the given first octet, or None if invalid."""
+    if 1 <= first_octet <= 127:
+        return 'A'
+    if 128 <= first_octet <= 191:
+        return 'B'
+    if 192 <= first_octet <= 223:
+        return 'C'
+    return None
+
+
+
+def mask_to_prefix(mask_ip: str) -> int:
+    """Retourne la longueur du préfixe pour un masque donné (ex: 255.255.255.0 -> 24).
+    Renvoie None si le masque n'est pas valide."""
+    try:
+        net = ipaddress.IPv4Network(f"0.0.0.0/{mask_ip}", strict=False)
+        return net.prefixlen
+    except Exception:
+        return None
+    
+def is_classful_network_address(network_ip: str, mask_ip: str) -> bool:
+    """Valide qu'une adresse réseau et un masque forment un réseau classful valide.
+
+    Critères:
+    - L'adresse IP est IPv4 valide.
+    - Le masque est un masque de sous-réseau contigu et valide.
+    - La longueur du préfixe est ≥ la borne minimale associée à la classe du premier octet.
+    Bornes recommandées (à ajuster selon vos besoins) :
+    - Classe A: >= 16
+    - Classe B: >= 24
+    - Classe C: >= 24
+    - Retourne True si toutes les conditions sont respectées, sinon False.
+    """
+    try:
+        first_octet = int(network_ip.split('.')[0])
+    except Exception:
+        return False
+
+    cls = get_class_from_octet(first_octet)
+    print(cls)
+    if cls is None:
+        return False
+
+    prefix = mask_to_prefix(mask_ip)
+    if prefix is None:
+        return False
+
+    min_bits_by_class = {'A': 8, 'B': 16, 'C': 24}
+    if prefix < min_bits_by_class[cls]:
+        return False
+
+    # Validation des formats IP et masque
+    try:
+        ipaddress.IPv4Address(network_ip)
+    except Exception:
+        return False
+
+    try:
+        ipaddress.IPv4Network(f"{network_ip}/{mask_ip}", strict=False)
+    except Exception:
+        return False
+
+    return True
+
 # --------------------------------------
 #             Tests
 # --------------------------------------
+
+#print(is_classful_network_address("192.168.1.0", "255.255.255.128")) # true
+#print(is_classful_network_address("192.168.1.0", "255.255.0.0")) # false
+#print(is_classful_network_address("192.168.1.0", "/24")) # true
+#print(is_classful_network_address("128.168.1.0", "255.255.0.0")) # true
+
 
 # # sans spécification
 
