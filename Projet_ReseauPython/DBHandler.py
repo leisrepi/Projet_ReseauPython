@@ -69,7 +69,8 @@ def is_user_on_db(pseudo, motdepasse):
     cursor.execute(""" SELECT MotDePasse FROM Utilisateur WHERE Pseudo = ? """, (pseudo,))
     try:
         hashedMDP = cursor.fetchone() #--> renvoie un tuple donc hashedMDP[0] est le Bytes que l'on doit envoyer
-        
+        if hashedMDP[0] == '':
+            hashedMDP[0] = "None"
     except:
         hashedMDP = []
         hashedMDP.append(ath.DUMMY_HASH)
