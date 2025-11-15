@@ -229,7 +229,7 @@ class Page1(tk.Frame):
 	def __init__(self, parent, controller):
 		super().__init__(parent, pady=10)
 		self.controller = controller
-		label = tk.Label(self, text="Informations d'une adresse", font=H2_FONT)
+		label = tk.Label(self, text="Informations d'une adresse IP", font=H2_FONT)
 		label.grid(row=0, column=0, columnspan=2 , padx=5, pady=5)
 
 		#--------------------------------------
@@ -243,7 +243,7 @@ class Page1(tk.Frame):
 		self.mask_entry = tk.Entry(self, font=P2_FONT, width=20)
 		self.mask_entry.grid(row=1, column=3, padx=5, pady=5)
 
-		tk.Button(self, text="Obtenir les informations de l'adresse", command=self.show_address_info, font=P2_FONT, borderwidth=1, relief="solid").grid(row=1, column=4, padx=5, pady=5)
+		tk.Button(self, text="Obtenir les informations de l'adresse IP", command=self.show_address_info, font=P2_FONT, borderwidth=1, relief="solid").grid(row=1, column=4, padx=5, pady=5)
 		#--------------------------------------
 		# Résultats
 
@@ -306,7 +306,7 @@ class Page2(tk.Frame):
 	def __init__(self, parent, controller):
 		super().__init__(parent, pady=10)
 		self.controller = controller
-		label = tk.Label(self, text="Page 2", font=H2_FONT)
+		label = tk.Label(self, text="Appartenance d'une ip a un réseau", font=H2_FONT)
 		label.pack(pady=10, padx=10)
 
 		#Styles
@@ -324,16 +324,16 @@ class Page2(tk.Frame):
 		#Entrées
 		ttk.Label(frame, text="Adresse IP à vérifier :").grid(row=0, column=0, stick="w", **pad)
 		self.ip_var = tk.StringVar()
-		ttk.Entry(frame, textvariable=self.ip_var, width=28).grid(row=0, column=1, sticky="we", **pad)
+		ttk.Entry(frame, textvariable=self.ip_var, width=16).grid(row=0, column=1, sticky="we", **pad)
 
 		ttk.Label(frame, text="Réseau ou sous-réseau :").grid(row=1, column=0, sticky="w", **pad)
 		self.reseau_var = tk.StringVar()
-		ttk.Entry(frame, textvariable=self.reseau_var, width=28).grid(row=1, column=1, sticky="we", **pad)
+		ttk.Entry(frame, textvariable=self.reseau_var, width=16).grid(row=1, column=1, sticky="we", **pad)
 		ttk.Label(frame, text="ex: 192.168.3.0 ou 192.168.3.0/26").grid(row=1,column=2, sticky="we",**pad)
 		
-		ttk.Label(frame, text="Masque (optionnel si CIDR) :").grid(row=2, column=0, **pad)
+		ttk.Label(frame, text="Masque (optionnel si classfull) :").grid(row=2, column=0, **pad)
 		self.masque_var = tk.StringVar()
-		ttk.Entry(frame, textvariable=self.masque_var, width=28).grid(row=2, column=1, **pad)
+		ttk.Entry(frame, textvariable=self.masque_var, width=16).grid(row=2, column=1, **pad)
 		ttk.Label(frame, text="ex: 255.255.255.192 ou /26").grid(row=2,column=2,sticky="w")
 
 		#Boutons
@@ -427,7 +427,7 @@ class Page3(tk.Frame):
 		if len(self.nb_machine_inputs) < nb_subnets: #plus petit, on dois en ajouter:
 			for i in range(len(self.nb_machine_inputs), nb_subnets):
 				tk.Label(self.nb_machine_inputs_container.inner, text=f"Nb machine sous-réseau ({i+1}):", font=P2_FONT).grid(row=i, column=0, padx=5, pady=5, sticky="e")
-				entry = tk.Entry(self.nb_machine_inputs_container.inner, font=P2_FONT, width=20)
+				entry = tk.Entry(self.nb_machine_inputs_container.inner, font=P2_FONT, width=8)
 				entry.grid(row=i, column=1, padx=5, pady=5)
 				entry.bind("<Return>", lambda event, widget=entry: self._nb_machine_input_apply_changes(widget))
 				entry.bind("<FocusOut>", lambda event, widget=entry: self._verify_and_inform_every_nb_machine_per_subnet_input())
@@ -522,7 +522,7 @@ class Page3(tk.Frame):
 		self.data['subneting_name'] = None
 		# #--------------------------------------|Découpage en sous-réseaux|--------------------------------------
 		# Bouton pour ouvrir la fenêtre de load and save les découpes 
-		tk.Button(self, text="Sauvegarder ou charger une découpe", font=P2_FONT, command=self.show_save_and_load_window).grid(row=0, column=0, padx=5, pady=5, sticky="e")
+		tk.Button(self, text="Gestion découpe réseau", font=P2_FONT, command=self.show_save_and_load_window).grid(row=0, column=0, padx=5, pady=5, sticky="e")
 		label = tk.Label(self, text="Découpe en sous-réseaux", font=H2_FONT).grid(row=0, column=1, padx=5, pady=5, sticky="e", columnspan=4)
 		
 		
@@ -547,29 +547,29 @@ class Page3(tk.Frame):
 		
 
 		# Nombre de sous-réseaux
-		tk.Label(self, text="Nombre de sous-réseau:", font=P2_FONT).grid(row=3, column=0, padx=5, pady=5, sticky="e")
+		tk.Label(self, text="Nombre de sous-réseaux:", font=P2_FONT).grid(row=3, column=0, padx=5, pady=5, sticky="e")
 		self.nb_subnet = tk.Entry(self, font=P2_FONT, width=20)
 		self.nb_subnet.bind("<Return>",lambda x : self._apply_changes_from_inputs_of_group1())
 		self.nb_subnet.grid(row=3, column=1, columnspan=2, padx=5, pady=5, sticky="w")
 		self.nb_subnet.insert(0,"16") #TODO retirer la valeur par defaut
 
-		tk.Button(self, text="Valider", command=self._apply_changes_from_inputs_of_group1, font=P2_FONT, borderwidth=1, relief="solid").grid(row=3, column=3, padx=5, pady=5)
+		tk.Button(self, text="Valider", command=self._apply_changes_from_inputs_of_group1, font=P2_FONT, borderwidth=1, relief="solid").grid(row=3, column=3, padx=5, pady=5, sticky="w")
 		
 		#Affichage du nombre de sous-réseaux créés
 		self.nb_subnets_label = tk.Label(self, text="Nombre de sous-réseaux créés: 0", font=P2_FONT)
-		self.nb_subnets_label.grid(row=4, column=0, columnspan=3, padx=5, pady=5)
+		self.nb_subnets_label.grid(row=4, column=0, columnspan=3, padx=5, pady=5, sticky="w")
 
 		#Affichage du nombre maximum de machines par sous-réseaux
 		self.nb_machines_per_subnet_label = tk.Label(self, text="Nombre maximum de machines par sous-réseaux: 0", font=P2_FONT)
-		self.nb_machines_per_subnet_label.grid(row=5, column=0, columnspan=3, padx=5, pady=5)
+		self.nb_machines_per_subnet_label.grid(row=5, column=0, columnspan=3, padx=5, pady=5, sticky="w")
 
 		# container des inputs dynamiques pour le nombre de machines par sous-réseaux
 		self.nb_machine_inputs_container = ScrollableFrame(self)
-		self.nb_machine_inputs_container.grid(row=6, column=0, columnspan=3, padx=5, pady=5)
+		self.nb_machine_inputs_container.grid(row=6, rowspan=3, column=0, columnspan=3, padx=5, pady=5)
 		self.nb_machine_inputs_container.config(height=300,width=500)  # Hauteur fixe pour le conteneur scrollable
 		
 
-		tk.Button(self, text="Calculer la découpe", command=self.show_subnetting_result, font=P2_FONT, borderwidth=1, relief="solid").grid(row=7, column=0, columnspan=2, padx=5, pady=5)
+		tk.Button(self, text="Calculer la découpe", command=self.show_subnetting_result, font=P2_FONT, borderwidth=1, relief="solid").grid(row=8, column=3, columnspan=3, padx=5, pady=5)
 		
 		#-----------------------------------------------------------------------------------------------
 
@@ -586,15 +586,15 @@ class Page3(tk.Frame):
 		#-----------------------------------------------------------------------------------------------
 
 		# Tableau des sous-réseaux
-		colonnes = ["N°","Nb machine","Adresse de sous-réseau", "Adresse de broadcast", "Première IP", "Dernière IP"]
+		colonnes = ["N°","Nb machines","Adresse de sous-réseau", "Adresse de broadcast", "Première IP", "Dernière IP"]
 		self.tree = ttk.Treeview(self, columns=colonnes, show='headings')
-		self.tree.grid(row=3, column=4, rowspan=4, columnspan=2, padx=5, pady=5)
+		self.tree.grid(row=4, column=3, rowspan=4, columnspan=3, padx=5, pady=5)
 
 		self.tree.tag_configure("evenrow", background="lightblue")
 
 		self.tree.heading("N°", text="N°", anchor='center')
 		self.tree.column("N°", width=50, anchor='center')
-		self.tree.column("Nb machine", width=80, anchor='center')
+		self.tree.column("Nb machines", width=80, anchor='center')
 		for col in colonnes:
 			if col == "N°":
 				continue
@@ -686,34 +686,39 @@ class PageSelector(tk.Frame):
 		self.rowconfigure(3, weight=1)
 		tk.Label(self, text="Sélecteur de page", font=H2_FONT).pack(side="left",pady=10)
 
-		tk.Button(self, text="Aller à la Page 1", font=P2_FONT,
+		tk.Button(self, text="Informations d'une adresse IP", font=P2_FONT,
 				  command=lambda: controller.show_page("Page1")).pack(side="left",pady=5)
 
-		tk.Button(self, text="Aller à la Page 2", font=P2_FONT,
+		tk.Button(self, text="Appartenance d'une ip a un réseau", font=P2_FONT,
 				  command=lambda: controller.show_page("Page2")).pack(side="left",pady=5)	
-		tk.Button(self, text="Aller à la Page 3", font=P2_FONT,
+		tk.Button(self, text="Découpe en sous-réseaux", font=P2_FONT,
 				  command=lambda: controller.show_page("Page3")).pack(side="left",pady=5)	
 
 class MainApp:
 	def __init__(self, controller):
 		self.controller = controller
 		self.root = controller.root
-		self.root.title("Application Principale")
-		
+		self.root.title("Subnet Maker")
+		#self.root.grid_rowconfigure(0, weight=5)
+		#self.root.grid_rowconfigure(1, weight=0)
+		self.root.grid_rowconfigure(2, weight=5)
+		self.root.grid_columnconfigure(0, weight=5)
+		#self.root.grid_columnconfigure(1, weight=0)
+		self.root.grid_columnconfigure(4, weight=5)
 		# Récupérer la taille de l'écran
-		screen_width = self.root.winfo_screenwidth()
-		screen_height = self.root.winfo_screenheight()
+		screen_width = 1450 #self.root.winfo_screenwidth()
+		screen_height = 700 #self.root.winfo_screenheight()
 		# Définir la taille de la fenêtre
 		self.root.geometry(f"{screen_width}x{screen_height}+0+0")
 
 		header_frame = tk.Frame(self.root)
-		header_frame.grid(row=0, column=0, columnspan=2, sticky="ew")
-		tk.Label(header_frame, text="Bienvenue dans l'application principale!", font=H2_FONT).pack(pady=20)
+		header_frame.grid(row=1, column=1, columnspan=2, sticky="ew")
+		tk.Label(header_frame, text="Bienvenue dans Subnet Maker", font=H2_FONT).pack(pady=20)
 
 		# Creation du systeme de page:
 		# --- Conteneur des pages ---
 		container = tk.Frame(self.root)
-		container.grid(row=1, column=0, sticky="nsew")
+		container.grid(row=2, column=1, sticky="nsew", padx=20, pady=20)
 		container.rowconfigure(0, weight=1)
 		container.columnconfigure(0, weight=1)
 
@@ -726,7 +731,7 @@ class MainApp:
 			frame.grid(row=0, column=0, sticky="nsew")
 
 		self.pageSelector = PageSelector(self.root, self)
-		self.pageSelector.grid(row=2, column=0, sticky="ns")
+		self.pageSelector.grid(row=3, column=1, sticky="ns")
 		self.show_page("Page1")
 
 	def on_button_click(self):
