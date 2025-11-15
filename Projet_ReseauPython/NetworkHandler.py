@@ -230,6 +230,16 @@ def check_ip_network(page2):
             except MaskNotInRangeException:
                 raise MaskNotInRangeException("Veuillez entrer un masque se trouvant entre /8 et /29 (ou 255.0.0.0 et 255.255.255.248)")
             masque_a_utiliser = masque_input
+
+            try:
+                validate_mask_format(masque_input, classful=True)
+                if(not is_classful_network_address(reseau_input, masque_a_utiliser)):
+                    raise MaskNotInRangeException("Le masque classfull introduit ne correspond pas au masque de classe de l'adresse IP")
+            except MaskNotInRangeException as e:
+                raise MaskNotInRangeException(e)
+            except Exception:
+                pass
+
         else:
             #Masque de classé basé sur l'adresse de réseau
             reseau_ip_obj = create_ip_address(reseau_input)
