@@ -306,7 +306,7 @@ class Page2(tk.Frame):
 	def __init__(self, parent, controller):
 		super().__init__(parent, pady=10)
 		self.controller = controller
-		label = tk.Label(self, text="Page 2", font=H2_FONT)
+		label = tk.Label(self, text="Appartenance d'une ip a un réseau", font=H2_FONT)
 		label.pack(pady=10, padx=10)
 
 		#Styles
@@ -324,16 +324,16 @@ class Page2(tk.Frame):
 		#Entrées
 		ttk.Label(frame, text="Adresse IP à vérifier :").grid(row=0, column=0, stick="w", **pad)
 		self.ip_var = tk.StringVar()
-		ttk.Entry(frame, textvariable=self.ip_var, width=28).grid(row=0, column=1, sticky="we", **pad)
+		ttk.Entry(frame, textvariable=self.ip_var, width=16).grid(row=0, column=1, sticky="we", **pad)
 
 		ttk.Label(frame, text="Réseau ou sous-réseau :").grid(row=1, column=0, sticky="w", **pad)
 		self.reseau_var = tk.StringVar()
-		ttk.Entry(frame, textvariable=self.reseau_var, width=28).grid(row=1, column=1, sticky="we", **pad)
+		ttk.Entry(frame, textvariable=self.reseau_var, width=16).grid(row=1, column=1, sticky="we", **pad)
 		ttk.Label(frame, text="ex: 192.168.3.0 ou 192.168.3.0/26").grid(row=1,column=2, sticky="we",**pad)
 		
 		ttk.Label(frame, text="Masque (optionnel si classfull) :").grid(row=2, column=0, **pad)
 		self.masque_var = tk.StringVar()
-		ttk.Entry(frame, textvariable=self.masque_var, width=28).grid(row=2, column=1, **pad)
+		ttk.Entry(frame, textvariable=self.masque_var, width=16).grid(row=2, column=1, **pad)
 		ttk.Label(frame, text="ex: 255.255.255.192 ou /26").grid(row=2,column=2,sticky="w")
 
 		#Boutons
@@ -686,12 +686,12 @@ class PageSelector(tk.Frame):
 		self.rowconfigure(3, weight=1)
 		tk.Label(self, text="Sélecteur de page", font=H2_FONT).pack(side="left",pady=10)
 
-		tk.Button(self, text="Aller à la Page 1", font=P2_FONT,
+		tk.Button(self, text="Informations d'une adresse IP", font=P2_FONT,
 				  command=lambda: controller.show_page("Page1")).pack(side="left",pady=5)
 
-		tk.Button(self, text="Aller à la Page 2", font=P2_FONT,
+		tk.Button(self, text="Appartenance d'une ip a un réseau", font=P2_FONT,
 				  command=lambda: controller.show_page("Page2")).pack(side="left",pady=5)	
-		tk.Button(self, text="Aller à la Page 3", font=P2_FONT,
+		tk.Button(self, text="Découpe en sous-réseaux", font=P2_FONT,
 				  command=lambda: controller.show_page("Page3")).pack(side="left",pady=5)	
 
 class MainApp:
