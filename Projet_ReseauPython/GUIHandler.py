@@ -383,7 +383,7 @@ class Page3(tk.Frame):
 		# On récupère le résultat du contrôleur
 		result, step, nb_machines_max = self.controller.controller_subnetting_calculation(self)
 		print("Resultat de la découpe : ", result)
-		self.total_nb_machines.config(text=str(nb_machines_max))
+		self.total_nb_machines.config(text=str(int(self.nb_subnet.get())*self.data["nb_max_machines_per_subnet"]))
 		self.step.config(text=step)
 		# On remplit le tableau avec le résultat
 		i = 0
