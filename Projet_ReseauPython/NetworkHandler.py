@@ -7,7 +7,6 @@ from AppException import InvalidMaskException, MaskNotInRangeException, SNMaskEr
 from AddressHandler import is_ip_valid, create_ip_address
 import re
 
-import re
 # --------------------------------------
 #             Fonctions
 # --------------------------------------

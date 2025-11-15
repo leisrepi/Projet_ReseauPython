@@ -1,13 +1,15 @@
 import tkinter as tk
 import BasicUtilies as bu
+import DBHandler as db
 from tkinter import messagebox, ttk
 from AppException import InvalidMaskException, MaskNotInRangeException
 from ipaddress import AddressValueError
 import NetworkHandler as nh
-
+import sqlite3
 from typing import TYPE_CHECKING #pour avoir la docu sans import du module a l'execution (car pas besoin et importation circulaire)
 if TYPE_CHECKING:
 	import GUIController
+
 
 # Constantes de taille de police
 H1_FONT = ("Arial", 24, "bold")
@@ -366,14 +368,14 @@ class Page3(tk.Frame):
 
 		#verification adresse réseau et masque
 		if self.controller.controller_verify_input_group1(self,self.nb_subnet.get(),self.network_entry.get(), self.mask_entry.get()) is None:
-			return
+			return False
 
 		#verfication nb machines par sous reseau (si vide)
 		if not self.controller.controller_verify_and_propose_correction_empty_machine_per_subnet_input(self):
-			return
+			return False
 		#verfication nb machines par sous reseau (si valide)
 		if not self._is_nb_machine_per_subnet_inputs_valid():
-			return
+			return False
 
 		# On vide le tableau avant d'afficher les nouveaux résultats
 		self.tree.delete(*self.tree.get_children())
@@ -502,7 +504,8 @@ class Page3(tk.Frame):
 		if info["row"] + 1 < len(self.nb_machine_inputs):
 			self.nb_machine_inputs[info["row"]+1].focus_set()
     	
-		
+	def show_save_and_load_window(self):
+		PopupSaveAndLoad(self.controller.root, self.controller, self)
 
 	def __init__(self , parent, controller : 'GUIController.GUIController'):
 
@@ -516,13 +519,18 @@ class Page3(tk.Frame):
 		self.data['nb_machines_per_subnet'] = []
 		self.data['network'] = None
 		self.data['mask'] = None
+		self.data['subneting_name'] = None
 		# #--------------------------------------|Découpage en sous-réseaux|--------------------------------------
-		label = tk.Label(self, text="Découpe en sous-réseaux", font=H2_FONT).grid(row=0, column=0, padx=5, pady=5, sticky="e", columnspan=5)
+		# Bouton pour ouvrir la fenêtre de load and save les découpes 
+		tk.Button(self, text="Sauvegarder ou charger une découpe", font=P2_FONT, command=self.show_save_and_load_window).grid(row=0, column=0, padx=5, pady=5, sticky="e")
+		label = tk.Label(self, text="Découpe en sous-réseaux", font=H2_FONT).grid(row=0, column=1, padx=5, pady=5, sticky="e", columnspan=4)
 		
 		
 		# #-----------------------------------------------------------------------------------------------
 		# ============== Inputs groupe 1 ==================
 		# Adresse réseau
+
+		#XXX : l'adresse réseau peu etre incorrect et quand meme accepter (ex: 192.168.0.1 avec un masque /24 ne devrais pas passer?)
 		tk.Label(self, text="Adresse réseau:", font=P2_FONT).grid(row=1, column=0, padx=5, pady=5, sticky="e")
 		self.network_entry = tk.Entry(self, font=P2_FONT, width=20)
 		self.network_entry.bind("<Return>",lambda x : self._apply_changes_from_inputs_of_group1())
@@ -562,7 +570,7 @@ class Page3(tk.Frame):
 		
 
 		tk.Button(self, text="Calculer la découpe", command=self.show_subnetting_result, font=P2_FONT, borderwidth=1, relief="solid").grid(row=7, column=0, columnspan=2, padx=5, pady=5)
-
+		
 		#-----------------------------------------------------------------------------------------------
 
 		# Pas
@@ -593,6 +601,86 @@ class Page3(tk.Frame):
 			self.tree.heading(col, text=col)
 			self.tree.column(col, anchor='center')
 
+class PopupSaveAndLoad(tk.Toplevel):
+
+	#FIXME erreur lorsque l'on vérifie que les nombre de machines soient bien entrés (si pas entrer sauvegardés quand même)
+	def save_subnetting_data(self, page3, subnetting_name):
+		if(subnetting_name==""):
+			messagebox.showerror("Erreur", "Veuillez entrer un nom de découpe")
+			return
+		if(page3.nb_machine_inputs == [] or page3.nb_machine_inputs is None):
+			messagebox.showerror("Erreur", "Vous n'avez pas entré vos nombre de machines dans les sous-réseaux")
+			self.destroy()
+			return
+		try:
+			self.controller.controller_save_subnetting_data(page3, subnetting_name)
+		# Fenêtre pour demander à l'utilisateur s'il veut écraser la découpe déjà existante
+		except sqlite3.IntegrityError:
+			popup = tk.Toplevel(self, )
+			tk.Label(popup, text="La découpe existe déjà, voulez-vous l'écraser ?", font=P3_FONT).grid(row=0, column=0, pady=10, columnspan=2)
+			tk.Button(popup, text="Oui", font=P2_FONT, command=lambda : self.overwrite_subnetting_data(page3, subnetting_name)).grid(row=1, column=0, pady=10)
+			tk.Button(popup, text="Non", font=P2_FONT, command=popup.destroy).grid(row=1, column=1, pady=10)
+
+		self.update_subnettings_in_popup(page3)
+
+	def load_subnetting_data(self, page3, subnetting):
+		self.controller.controller_load_subnetting_data(page3, subnetting)
+		self.destroy()
+
+	def delete_subnetting(self, page3, subnetting_name):
+		try:
+			self.controller.controller_delete_subnetting(subnetting_name)
+		except Exception:
+			messagebox.showerror("Erreur", "Quelque chose c'est mal passé lors de la suppression de la découpe")
+	
+		self.update_subnettings_in_popup(page3)
+
+	def overwrite_subnetting_data(self, page3, subnetting_name):
+		self.controller.controller_delete_subnetting(subnetting_name)
+
+		self.controller.controller_save_subnetting_data(page3, subnetting_name)
+
+	def update_subnettings_in_popup(self, page3):
+
+		for widget in self.scrollable_frame.inner.winfo_children():
+			widget.destroy()
+		# Chaque découpe sauvegardée sera affichée ici
+		self.subnettings = db.get_all_subnettings_of_user(self.controller.session)
+		if(self.subnettings is None):
+			return
+	
+		for i in range(len(self.subnettings)):
+			# subnettings[i][0] représente le nom de la découpe i
+			print("Découpe: ", self.subnettings[i][0])
+			tk.Label(self.scrollable_frame.inner, text=self.subnettings[i][0], font=P3_FONT).grid(row=i+1, column=0, pady=5)
+			#lambda index=i --> afin que i soit sauvegardé en même temps que l'event (sinon i sera égal au dernier indice de la liste)
+			tk.Button(self.scrollable_frame.inner, text="📂", font=P3_FONT, command= lambda index=i: self.load_subnetting_data(page3, self.subnettings[index])).grid(row=i+1, column=1)
+			print()
+			tk.Button(self.scrollable_frame.inner, text="     🗑️", font=P3_FONT, command= lambda index=i: self.delete_subnetting(page3, self.subnettings[index][0])).grid(row=i+1, column=2)
+		
+	def __init__(self, parent, controller  : 'GUIController.GUIController', page3):
+		super().__init__(parent, pady=10)
+		self.controller = controller
+		self.title("Gestion des découpes")
+		self.geometry("750x750")
+		self.resizable(True, True)
+
+		# Empêche d'interagir avec la fenêtre principale tant que la popup est ouverte
+		self.grab_set()
+		# Contenu de la popup
+		#--------------------------------------
+		# Nom de la découpe
+		tk.Label(self, text="Nom de la découpe", font=P3_FONT).grid(row=0, column=0, pady=10)
+		subnetting_entry = tk.Entry(self, font=P3_FONT)
+		subnetting_entry.grid(row=0, column=1, pady=10)
+		tk.Button(self, text="💾", font=P2_FONT, command=lambda : self.save_subnetting_data(page3, subnetting_entry.get())).grid(row=0, column=2, pady=10)
+		#--------------------------------------
+		# Frame scrollable pour le contenu
+		self.scrollable_frame = ScrollableFrame(self)
+		self.scrollable_frame.grid(row=1, column=0, columnspan=3, padx=10, pady=10)
+		
+		self.update_subnettings_in_popup(page3)
+
 
 
 class PageSelector(tk.Frame):
@@ -615,8 +703,13 @@ class MainApp:
 		self.controller = controller
 		self.root = controller.root
 		self.root.title("Application Principale")
-		self.root.geometry("1600x800")#str(self.root.winfo_screenwidth())+"x"+str(self.root.winfo_screenheight()))
-		# Frame pour le label de bienvenue
+		
+		# Récupérer la taille de l'écran
+		screen_width = self.root.winfo_screenwidth()
+		screen_height = self.root.winfo_screenheight()
+		# Définir la taille de la fenêtre
+		self.root.geometry(f"{screen_width}x{screen_height}+0+0")
+
 		header_frame = tk.Frame(self.root)
 		header_frame.grid(row=0, column=0, columnspan=2, sticky="ew")
 		tk.Label(header_frame, text="Bienvenue dans l'application principale!", font=H2_FONT).pack(pady=20)

@@ -1,17 +1,19 @@
 import tkinter as tk
 import GUIHandler
 import AuthHandler
-import DBHandler  
+import DBHandler as db
+import DBHandler
 import time
 import threading
 #TODO : importer le import au complet vue que on ce sert de toutes les fonctions
-import AppException
 from SubnetHandler import calculate_subnetting, calculate_step, calculate_nb_hosts_max
-import SubnetHandler
 import AddressHandler
+from ipaddress import NetmaskValueError, AddressValueError
+from SubnetHandler import calculate_subnetting, calculate_step, calculate_nb_hosts_max
 from NetworkHandler import create_network, define_mask_by_ip_class, validate_mask_format
-from ipaddress import AddressValueError
 import NetworkHandler
+from AppException import InvalidMaskException, MaskNotInRangeException
+import AppException
 
 import BasicUtilies as bu
 import tkinter.messagebox as msg
@@ -142,7 +144,7 @@ class GUIController:
             self.disconnect()
             return
         time_left = self.session.session_expiration_time - time.time()
-        if time_left <= 95:
+        if time_left <= 115:
             self.session = AuthHandler.refresh_session(self.session)
             print("refreshed")
     #TODO : vérifier les entrées utilisateur avant de lancer le calcul (si elles ne sont pas vides et sont valides)
@@ -177,6 +179,8 @@ class GUIController:
     #----------------------------------------fonction page3--------------------------------------------
     
     def controller_verify_input_group1(self, page3 : GUIHandler.Page3, nb_subnet_voulue, subnet, mask):
+        print(page3)
+        print("----------------------------------------------------------------------")
         #verification du nombre de sous réseau
         nb_subnet_voulue : int = bu.to_int(nb_subnet_voulue) #c'est normal si c'est deja présent a certain endroit avant l'appel de cette fonction, certain appelant ne le font pas
         if nb_subnet_voulue is None or nb_subnet_voulue <= 0 or nb_subnet_voulue > 100:
@@ -270,7 +274,7 @@ class GUIController:
         classfull_mask = define_mask_by_ip_class(subnet.network_address)
         
         if(classfull_mask is None or str(subnet.netmask) < classfull_mask):
-            raise InvalidMaskException("Masque invalide pour cette adresse IP")
+            raise InvalidMaskException("Masque de sous-réseau supérieur au masque de réseau (masque de classe)")
 
         print("classfull mask : ", classfull_mask)
         print("subnet mask : ", str(subnet.netmask))
@@ -279,6 +283,109 @@ class GUIController:
         
         network = create_network(ip, classfull_mask)
         return network.network_address, network.broadcast_address, subnet.network_address, subnet.broadcast_address 
+    
+    def controller_load_subnetting_data(self, page3 : GUIHandler.Page3, data):
+        """
+        Charge les données de découpage en sous-réseaux dans la page 3 de l'interface graphique.
+        Args:
+            page3 (GUIHandler.Page3): La page 3 de l'interface graphique.
+            data (tuple): Un tuple contenant les données de découpage en sous-réseaux.
+                data[0] : nom de la découpe
+                data[1] : nom d'utilisateur (speudo)
+                data[2] : adresse réseau
+                data[3] : masque réseau
+                
+        Returns:
+            None
+        """
+        page3.data['subneting_name'] = data[0]
+        page3.network_entry.delete(0, tk.END)
+        page3.network_entry.insert(0, data[2])
+        page3.mask_entry.delete(0, tk.END) 
+        page3.mask_entry.insert(0, data[3])
+
+        #on demande les découpes a la db
+        #TODO : bon nom de la fonction a mettre au lieux de valeur hardcode ex : DBHandler.get_all_subnetting_of_user(self.session, data[0])
+        """subnetting_data = [["découpe de test", 5 , 1 , "Kevin"],
+                           ["découpe de test", 10 , 2 , "Kevin"],
+                           ["découpe de test", 2 , 3 , "Kevin"],
+                           ["découpe de test", 6 , 4 , "Kevin"],
+                           ["découpe de test", 8 , 5 , "Kevin"],
+                           ] """
+        subnetting_data = DBHandler.get_all_subnets_of_a_subnetting(self.session, data[0])
+        
+        if subnetting_data is None:
+            msg.showerror("Erreur", "La découpe que vous essayez de charger n'existe pas ou une erreur est survenue lors de la récupération des données.")
+            return
+        #on remplit les champs
+        page3.nb_subnet.delete(0, tk.END)
+        page3.nb_subnet.insert(0, str(len(subnetting_data)))
+        page3.change_nb_machines_inputs(len(subnetting_data))
+        for i in range (len(subnetting_data)):
+            page3.nb_machine_inputs[i].delete(0, tk.END)
+            page3.nb_machine_inputs[i].insert(0, str(subnetting_data[i][1])) #le 1 c'est le nb de machine du sous réseau
+
+        #on lance la découpe pour réobtenir le résultat:
+        page3.show_subnetting_result()
+
+    def controller_save_subnetting_data(self, page3 : GUIHandler.Page3, subneting_name):
+        """
+        Sauvegarde les données de découpage en sous-réseaux dans la base de données.
+        Args:
+            page3 (GUIHandler.Page3): La page 3 de l'interface graphique.
+            subneting_name (str): Le nom de la découpe en sous-réseaux.
+        Returns:
+            None (ou False en cas d'erreur)
+        """
+        #TODO : retourner des erreurs ou juste un boolean ?
+
+        #verification adresse réseau et masque
+        if self.controller_verify_input_group1(page3,page3.nb_subnet.get(),page3.network_entry.get(), page3.mask_entry.get()) is None:
+            return False
+
+        #Vérification que tous les champs sont remplis
+        if not self.controller_verify_and_propose_correction_empty_machine_per_subnet_input(page3):
+            return False
+        
+        #verfication nb machines par sous reseau (si valide)
+        if not page3._is_nb_machine_per_subnet_inputs_valid():
+            return False
+        
+        #Récupération des données a sauvegarder
+        subnet_address = page3.network_entry.get()
+        subnet_mask = page3.mask_entry.get()
+        list_nb_machines = []
+        for input in page3.nb_machine_inputs:
+            list_nb_machines.append(bu.to_int(input.get()))
+        
+        #+-----------------------+
+        #| Sauvegarde dans la db |
+        #+-----------------------+
+
+        #sauvegarde de la découpe réseau
+        #TODO : a modifier, le pseudo sera retirer au merge
+        DBHandler.insert_decoupe(self.session, subneting_name, subnet_address, subnet_mask)
+        
+        #sauvegarde des sous-réseaux
+        try:
+            
+            for i in range(len(list_nb_machines)):
+                DBHandler.insert_sous_reseau(self.session, i+1, list_nb_machines[i], subneting_name)
+        except Exception as e:
+            msg.showerror("Erreur", f"Une erreur est survenue lors de la sauvegarde des sous-réseaux : {e}")
+            #erreur de sauvegarde des sous-réseaux, on supprime la découpe réseau créée précédemment
+            try:
+                DBHandler.delete_Subnetting(self.session, subneting_name)
+            except Exception as e2:
+                msg.showerror("Erreur critique", f"Une erreur critique est survenue lors de la sauvegarde des sous-réseaux et la suppression de la découpe réseau a échoué : {e2}")
+            return
+        msg.showinfo("Succès", "Les données de découpage en sous-réseaux ont été sauvegardées avec succès.")
+    
+        
+    
+    def controller_delete_subnetting(self, subnetting_id):
+        db.delete_subnetting(self.session, subnetting_id)
+        
     
 '''
 if __name__ == "__main__":
