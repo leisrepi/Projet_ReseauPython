@@ -39,14 +39,14 @@ def calculate_step(nb_machines):
     """
 
     if(nb_machines < 256):
-        return str(nb_machines) + " sur l'octet 4"
+        return str(nb_machines + 2) + " sur l'octet 4"
     elif(nb_machines < 65536):
         # // pour division entière
-        return str(floor(nb_machines / 256)) + " sur l'octet 3"
+        return str(floor((nb_machines + 2) / 256)) + " sur l'octet 3"
     elif(nb_machines < 16777216):
-        return str(floor(nb_machines / 65536)) + " sur l'octet 2"
+        return str(floor((nb_machines + 2) / 65536)) + " sur l'octet 2"
     elif(nb_machines < 4294967296):
-        return str(floor(nb_machines / 16777216)) + " sur l'octet 1"
+        return str(floor((nb_machines + 2) / 16777216)) + " sur l'octet 1"
     return 
 
 # Vérification de la possibilité de faire une découpe classique
