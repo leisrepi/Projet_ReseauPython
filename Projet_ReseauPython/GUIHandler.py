@@ -427,7 +427,7 @@ class Page3(tk.Frame):
 		if len(self.nb_machine_inputs) < nb_subnets: #plus petit, on dois en ajouter:
 			for i in range(len(self.nb_machine_inputs), nb_subnets):
 				tk.Label(self.nb_machine_inputs_container.inner, text=f"Nb machine sous-réseau ({i+1}):", font=P2_FONT).grid(row=i, column=0, padx=5, pady=5, sticky="e")
-				entry = tk.Entry(self.nb_machine_inputs_container.inner, font=P2_FONT, width=20)
+				entry = tk.Entry(self.nb_machine_inputs_container.inner, font=P2_FONT, width=8)
 				entry.grid(row=i, column=1, padx=5, pady=5)
 				entry.bind("<Return>", lambda event, widget=entry: self._nb_machine_input_apply_changes(widget))
 				entry.bind("<FocusOut>", lambda event, widget=entry: self._verify_and_inform_every_nb_machine_per_subnet_input())
@@ -553,23 +553,23 @@ class Page3(tk.Frame):
 		self.nb_subnet.grid(row=3, column=1, columnspan=2, padx=5, pady=5, sticky="w")
 		self.nb_subnet.insert(0,"16") #TODO retirer la valeur par defaut
 
-		tk.Button(self, text="Valider", command=self._apply_changes_from_inputs_of_group1, font=P2_FONT, borderwidth=1, relief="solid").grid(row=3, column=3, padx=5, pady=5)
+		tk.Button(self, text="Valider", command=self._apply_changes_from_inputs_of_group1, font=P2_FONT, borderwidth=1, relief="solid").grid(row=3, column=3, padx=5, pady=5, sticky="w")
 		
 		#Affichage du nombre de sous-réseaux créés
 		self.nb_subnets_label = tk.Label(self, text="Nombre de sous-réseaux créés: 0", font=P2_FONT)
-		self.nb_subnets_label.grid(row=4, column=0, columnspan=3, padx=5, pady=5)
+		self.nb_subnets_label.grid(row=4, column=0, columnspan=3, padx=5, pady=5, sticky="w")
 
 		#Affichage du nombre maximum de machines par sous-réseaux
 		self.nb_machines_per_subnet_label = tk.Label(self, text="Nombre maximum de machines par sous-réseaux: 0", font=P2_FONT)
-		self.nb_machines_per_subnet_label.grid(row=5, column=0, columnspan=3, padx=5, pady=5)
+		self.nb_machines_per_subnet_label.grid(row=5, column=0, columnspan=3, padx=5, pady=5, sticky="w")
 
 		# container des inputs dynamiques pour le nombre de machines par sous-réseaux
 		self.nb_machine_inputs_container = ScrollableFrame(self)
-		self.nb_machine_inputs_container.grid(row=6, column=0, columnspan=3, padx=5, pady=5)
+		self.nb_machine_inputs_container.grid(row=6, rowspan=3, column=0, columnspan=3, padx=5, pady=5)
 		self.nb_machine_inputs_container.config(height=300,width=500)  # Hauteur fixe pour le conteneur scrollable
 		
 
-		tk.Button(self, text="Calculer la découpe", command=self.show_subnetting_result, font=P2_FONT, borderwidth=1, relief="solid").grid(row=7, column=0, columnspan=2, padx=5, pady=5)
+		tk.Button(self, text="Calculer la découpe", command=self.show_subnetting_result, font=P2_FONT, borderwidth=1, relief="solid").grid(row=8, column=3, columnspan=3, padx=5, pady=5)
 		
 		#-----------------------------------------------------------------------------------------------
 
@@ -588,7 +588,7 @@ class Page3(tk.Frame):
 		# Tableau des sous-réseaux
 		colonnes = ["N°","Nb machine","Adresse de sous-réseau", "Adresse de broadcast", "Première IP", "Dernière IP"]
 		self.tree = ttk.Treeview(self, columns=colonnes, show='headings')
-		self.tree.grid(row=3, column=4, rowspan=4, columnspan=2, padx=5, pady=5)
+		self.tree.grid(row=4, column=3, rowspan=4, columnspan=3, padx=5, pady=5)
 
 		self.tree.tag_configure("evenrow", background="lightblue")
 
