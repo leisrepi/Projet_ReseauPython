@@ -233,14 +233,11 @@ def check_ip_network(page2):
 
             try:
                 validate_mask_format(masque_input, classful=True)
-                print(not is_classful_network_address(reseau_input, masque_a_utiliser))
                 if(not is_classful_network_address(reseau_input, masque_a_utiliser)):
                     raise MaskNotInRangeException("Le masque classfull introduit ne correspond pas au masque de classe de l'adresse IP")
             except MaskNotInRangeException as e:
                 raise MaskNotInRangeException(e)
             except Exception:
-                print("Masque d'entrée:",masque_a_utiliser)
-                print("Adresse réseau", reseau_input)
                 pass
 
         else:

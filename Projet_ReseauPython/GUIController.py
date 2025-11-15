@@ -193,6 +193,14 @@ class GUIController:
         except Exception as e:
             msg.showerror("Erreur", str(e))
             return None
+        if(subnet[0] != "/"):
+            try:
+                validate_mask_format(mask, classful=True)
+                if(not NetworkHandler.is_classful_network_address(subnet, mask)):
+                    msg.showerror("Erreur","Le masque classfull introduit ne correspond pas au masque de classe de l'adresse IP")
+                    return None
+            except Exception:
+                pass
 
         #verification du subnet
           #verif de la validité de l'adresse IP
