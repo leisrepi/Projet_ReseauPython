@@ -274,7 +274,7 @@ class GUIController:
         classfull_mask = define_mask_by_ip_class(subnet.network_address)
         
         if(classfull_mask is None or str(subnet.netmask) < classfull_mask):
-            raise InvalidMaskException("Masque invalide pour cette adresse IP")
+            raise InvalidMaskException("Masque de sous-réseau supérieur au masque de réseau (masque de classe)")
 
         print("classfull mask : ", classfull_mask)
         print("subnet mask : ", str(subnet.netmask))
