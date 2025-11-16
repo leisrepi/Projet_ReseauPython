@@ -306,7 +306,7 @@ class Page2(tk.Frame):
 	def __init__(self, parent, controller):
 		super().__init__(parent, pady=10)
 		self.controller = controller
-		label = tk.Label(self, text="Appartenance d'une ip a un réseau", font=H2_FONT)
+		label = tk.Label(self, text="Appartenance d'une IP a un réseau", font=H2_FONT)
 		label.pack(pady=10, padx=10)
 
 		#Styles
@@ -689,7 +689,7 @@ class PageSelector(tk.Frame):
 		tk.Button(self, text="Informations d'une adresse IP", font=P2_FONT,
 				  command=lambda: controller.show_page("Page1")).pack(side="left",pady=5)
 
-		tk.Button(self, text="Appartenance d'une ip a un réseau", font=P2_FONT,
+		tk.Button(self, text="Appartenance d'une IP a un réseau", font=P2_FONT,
 				  command=lambda: controller.show_page("Page2")).pack(side="left",pady=5)	
 		tk.Button(self, text="Découpe en sous-réseaux", font=P2_FONT,
 				  command=lambda: controller.show_page("Page3")).pack(side="left",pady=5)	
