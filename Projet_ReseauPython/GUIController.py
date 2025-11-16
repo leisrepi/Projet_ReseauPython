@@ -280,7 +280,7 @@ class GUIController:
         
         mask = mask.strip()
         if int(ip.split(".")[0]) > 223:
-            raise AddressValueError("Il n'est pas possible d'obtenir les informations réseau d'une adresse de classe D ou E")
+            raise AddressValueError("Il n'est pas possible d'obtenir les informations du réseau d'une adresse de classe D ou E")
            
 
         if(mask[0] == "/"):
