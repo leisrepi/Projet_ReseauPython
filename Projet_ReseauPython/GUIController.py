@@ -257,7 +257,7 @@ class GUIController:
             return False
         for input in page3.nb_machine_inputs:
             if input.get() == "":
-                user_answer = msg.askyesno("Champs vide détecté", "Un ou plusieurs champs de nombre de machines par sous-réseau sont vides. Voulez-vous les remplir avec '0' ? (non vous amenèra au premier champ vide pour correction)")
+                user_answer = msg.askyesno("Champs vide détecté", "Un ou plusieurs champs de nombre de machines par sous-réseau sont vides. Voulez-vous les remplir avec '0' ? (Non vous amènera au premier champ vide pour correction)")
                 if user_answer:
                     self.controller_fill_empty_machine_per_subnet_input_with_0(page3)
                     return True
