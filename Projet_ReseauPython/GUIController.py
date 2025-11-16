@@ -266,8 +266,8 @@ class GUIController:
                     return False
         return True
     
-    # dans le cas où l'adresse est en classfull
-    def controller_get_address_info(self, ip, mask):
+
+    def controller_get_address_info(self, ip : str, mask):
         try:
             validate_mask_format(mask)
             subnet = create_network(ip, mask)
@@ -279,11 +279,18 @@ class GUIController:
             raise MaskNotInRangeException(str(e))
         
         mask = mask.strip()
+        if int(ip.split(".")[0]) > 223:
+            raise AddressValueError("Il n'est pas possible d'obtenir les informations réseau d'une adresse de classe D ou E")
+           
+
         if(mask[0] == "/"):
-            return subnet.network_address, subnet.broadcast_address, None, None
+             return subnet.network_address, subnet.broadcast_address, None, None
+            
         
+        #gestion erreur classe D et E
+       
         classfull_mask = define_mask_by_ip_class(subnet.network_address)
-        
+       
         if(classfull_mask is None or str(subnet.netmask) < classfull_mask):
             raise InvalidMaskException("Masque de sous-réseau supérieur au masque de réseau (masque de classe)")
 
