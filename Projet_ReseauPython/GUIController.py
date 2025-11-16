@@ -5,7 +5,6 @@ import DBHandler as db
 import DBHandler
 import time
 import threading
-#TODO : importer le import au complet vue que on ce sert de toutes les fonctions
 from SubnetHandler import calculate_subnetting, calculate_step, calculate_nb_hosts_max
 import AddressHandler
 from ipaddress import NetmaskValueError, AddressValueError
@@ -52,26 +51,11 @@ class GUIController:
     def set_cursor_default(self):
         GUIController.get_instance().root.configure(cursor="")
 
-    def on_button_click(self):
-        print(self)
-        print("Bouton cliqué depuis le contrôleur !")
-        if (AuthHandler.verify_session(self.session)):
-            print("Session valide.")
-        else:
-            print("Session expirée, veuillez vous reconnecter.")
-            self.disconnect()
-
-    def on_login(self, pseudonyme, password):
-        #XXX RETIRER CE DEBUG !!!!!!
-        print(f"Login avec Email: {pseudonyme}, Mot de passe: {password}")
-
-        #XXX : verifier si les identifiants sont corrects avant d'ouvrir la fenetre principale
-        
+    def on_login(self, pseudonyme, password):        
         self.set_cursor_loading()
         self.view.change_login_button(tk.DISABLED)
         
         is_verification_done = tk.BooleanVar(self.root, value=False)
-        #FIXME : refaire cela au propre
         box = {"result": None, "error": None}
         def worker():
             try:
@@ -91,9 +75,7 @@ class GUIController:
 
         self.set_cursor_default()
         self.view.change_login_button(tk.ACTIVE)
-        print("session créée : ", self.session)
         if self.session != None and AuthHandler.verify_session(self.session):
-            print("Login réussi !")
             self.clean_view()
             self.view = GUIHandler.MainApp(self)
             # self.root.bind_all("<Key>", self.refresh_key)
@@ -101,7 +83,6 @@ class GUIController:
             self.bind_all_event_to_root("<Key>",self.refresh_key)
             self.bind_all_event_to_root("<Motion>", self.refresh_key)
         else:
-            print("Échec du login !")
             tk.messagebox.showerror("Erreur de connexion", "Email ou mot de passe incorrect.")
             return
 
@@ -110,7 +91,6 @@ class GUIController:
         self.view = GUIHandler.LoginMenu(self)
        
     def on_close(self):
-        print("Fermeture de l'application...")
         self.root.destroy()
         AuthHandler._shutdown()
 
@@ -127,8 +107,6 @@ class GUIController:
     def clean_view(self):
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
         self.root.title("NO_NAME_SET")
-        print("cleaned view")
-        #FIXME unbind les fonctionn qui actualise la key sinon réactualisation du menu en boucle
         for w in self.root.winfo_children():
             w.destroy()
         self.unbind_all_events()
@@ -146,9 +124,7 @@ class GUIController:
         time_left = self.session.session_expiration_time - time.time()
         if time_left <= 595:
             self.session = AuthHandler.refresh_session(self.session)
-            print("refreshed")
-    #TODO : vérifier les entrées utilisateur avant de lancer le calcul (si elles ne sont pas vides et sont valides)
-    #FIXME: modifier calculate_step pour qu'il affiche le bon pas
+
     def controller_subnetting_calculation(self, page3 : GUIHandler.Page3):
         try:
             network = create_network(page3.network_entry.get(), page3.mask_entry.get())
@@ -163,15 +139,10 @@ class GUIController:
         # on transforme les input en liste d'entiers
         list_nb_machines = []
         for input in page3.nb_machine_inputs:
-            if bu.to_int(input.get()) is None or bu.to_int(input.get()) < 0:
-                #TODO : mettre la bonne exception   
+            if bu.to_int(input.get()) is None or bu.to_int(input.get()) < 0: 
                 raise AppException.InvalidInputException("Invalid number of machines input.")
                 #tk.messagebox.showerror("Erreur", "Veuillez entrer des entiers positifs pour le nombre de machines par sous-réseau.")
             list_nb_machines.append(bu.to_int(input.get()))
-
-        #list_nb_machines = list(map(int, combobox_list[1:]))
-        #TODO : recyclage de fonction, CE n'est PAS DU TOUT PROPRE VOIR SOLIDE !!!!!
-        print(page3.data['nb_max_machines_per_subnet'], page3.nb_subnet.get())
         return calculate_subnetting(network, page3.data['nb_max_machines_per_subnet'], int(page3.nb_subnet.get())), calculate_step(page3.data['nb_max_machines_per_subnet']), network.num_addresses - 2
 
 
@@ -179,8 +150,6 @@ class GUIController:
     #----------------------------------------fonction page3--------------------------------------------
     
     def controller_verify_input_group1(self, page3 : GUIHandler.Page3, nb_subnet_voulue, subnet, mask):
-        print(page3)
-        print("----------------------------------------------------------------------")
         #verification du nombre de sous réseau
         nb_subnet_voulue : int = bu.to_int(nb_subnet_voulue) #c'est normal si c'est deja présent a certain endroit avant l'appel de cette fonction, certain appelant ne le font pas
         if nb_subnet_voulue is None or nb_subnet_voulue <= 0 or nb_subnet_voulue > 100:
@@ -217,8 +186,7 @@ class GUIController:
         return max_machine_per_subnet
 
     def controller_create_number_of_subnets_input(self, page3 : GUIHandler.Page3, nb_subnet_voulue, subnet, mask, confirmation = True):
-        print(nb_subnet_voulue, subnet, mask)
-        #TODO : verifier les entrers utilisateur, retour si erreur, et création des champs
+
         nb_subnet_voulue : int = bu.to_int(nb_subnet_voulue)
         max_machine_per_subnet  = self.controller_verify_input_group1(page3, nb_subnet_voulue, subnet, mask)
         if max_machine_per_subnet is None:
@@ -227,11 +195,9 @@ class GUIController:
         page3.data['nb_max_machines_per_subnet'] = max_machine_per_subnet
         #Demander a l'utilisateur si ce nombre de machine maximal lui convient
         if confirmation:
-            print(confirmation)
             if msg.askyesno("Confirmation", f"Le nombre de machine par sous réseau maximal sera de: {max_machine_per_subnet}. Voulez-vous continuer ?") == False:
                 return None
 
-        #TODO : hardcoder
         page3.change_nb_machines_inputs(nb_subnet_voulue)
 
 
@@ -296,8 +262,6 @@ class GUIController:
         if(classfull_mask is None or str(subnet.netmask) < classfull_mask):
             raise InvalidMaskException("Masque de sous-réseau supérieur au masque de réseau (masque de classe)")
 
-        print("classfull mask : ", classfull_mask)
-        print("subnet mask : ", str(subnet.netmask))
         if(str(subnet.netmask) == classfull_mask):
             return subnet.network_address, subnet.broadcast_address, None, None
         
@@ -325,13 +289,6 @@ class GUIController:
         page3.mask_entry.insert(0, data[3])
 
         #on demande les découpes a la db
-        #TODO : bon nom de la fonction a mettre au lieux de valeur hardcode ex : DBHandler.get_all_subnetting_of_user(self.session, data[0])
-        """subnetting_data = [["découpe de test", 5 , 1 , "Kevin"],
-                           ["découpe de test", 10 , 2 , "Kevin"],
-                           ["découpe de test", 2 , 3 , "Kevin"],
-                           ["découpe de test", 6 , 4 , "Kevin"],
-                           ["découpe de test", 8 , 5 , "Kevin"],
-                           ] """
         subnetting_data = DBHandler.get_all_subnets_of_a_subnetting(self.session, data[0])
         
         if subnetting_data is None:
@@ -364,7 +321,6 @@ class GUIController:
         Returns:
             None (ou False en cas d'erreur)
         """
-        #TODO : retourner des erreurs ou juste un boolean ?
 
         #verification adresse réseau et masque
         if self.controller_verify_input_group1(page3,page3.nb_subnet.get(),page3.network_entry.get(), page3.mask_entry.get()) is None:
@@ -390,7 +346,6 @@ class GUIController:
         #+-----------------------+
 
         #sauvegarde de la découpe réseau
-        #TODO : a modifier, le pseudo sera retirer au merge
         DBHandler.insert_decoupe(self.session, subneting_name, subnet_address, subnet_mask)
         
         #sauvegarde des sous-réseaux

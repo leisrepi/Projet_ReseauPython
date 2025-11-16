@@ -253,7 +253,6 @@ def insert_sous_reseau(session, numSR, nbMachine, nomDecoupe):
 def delete_user(user):
     cursor.execute("DELETE FROM Utilisateur WHERE Pseudo = ?", (user,))
     conn.commit()
-    print('Utilisateur supprimer !')
 
 def delete_subnetting( session, subNettingId):
     """ Sert à ajouter une découpe à l'utilisateur spécifié.
@@ -278,7 +277,6 @@ def delete_subnetting( session, subNettingId):
 def close_cursor():
     conn.close()
     cursor.close()
-    print("Le curseur est fermé")
 
 def open_cursor():
     conn = sq.connect('DecoupeUtilisateurDB.db')

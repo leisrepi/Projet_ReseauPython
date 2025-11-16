@@ -37,13 +37,20 @@ def clean_tk_element(element):
 		w.destroy()
 
 
-#TODO : faire la documentation
-# Fonction pour supprimer tous les widgets d'une ligne donnée
 def supprimer_row(element,row_num):
-    for widget in element.grid_slaves():  # Récupère tous les widgets gérés par grid
-        info = widget.grid_info()
-        if info["row"] == row_num:
-            widget.grid_forget()  # ou widget.destroy() pour les supprimer définitivement
+	""" Fonction pour supprimer tous les widgets d'une ligne donnée
+	Args:
+		element: widget Tkinter (par exemple un tk.Frame) dont on veut vider les enfants.
+		row_num : numéro du row
+
+	Returns:
+		None
+
+	"""
+	for widget in element.grid_slaves():  # Récupère tous les widgets gérés par grid
+		info = widget.grid_info()
+		if info["row"] == row_num:
+			widget.grid_forget()  # ou widget.destroy() pour les supprimer définitivement
 
 class LoginMenu:
 	def __init__(self, controller):
@@ -199,7 +206,7 @@ class ScrollableFrame(ttk.Frame):
 
 
 
-#TODO : vérifier les inputs vide (et indiquer a l'utilisateur de les remplir)
+
 class Page1(tk.Frame):
 	def show_address_info(self):
 		self.network_label.config(text="")
@@ -358,11 +365,6 @@ class Page2(tk.Frame):
 		frame.rowconfigure(6, weight=1)
 
 class Page3(tk.Frame):
-	#TODO : verifier la validité des entrées utilisateur avant de lancer le calcul
-	#TODO : bouton pour mettre les champs (non remplis) nb_machines a 0 (si on voulais 13 réseau, 16 serons crée )
-	
-	
-	#TODO : deplacer cela dans le controller
 	def show_subnetting_result(self):
 		#Verification des entrées utilisateur
 
@@ -382,7 +384,6 @@ class Page3(tk.Frame):
 		
 		# On récupère le résultat du contrôleur
 		result, step, nb_machines_max = self.controller.controller_subnetting_calculation(self)
-		print("Resultat de la découpe : ", result)
 		self.total_nb_machines.config(text=str(int(self.nb_subnet.get())*self.data["nb_max_machines_per_subnet"]))
 		self.step.config(text=step)
 		# On remplit le tableau avec le résultat
@@ -396,7 +397,7 @@ class Page3(tk.Frame):
 				self.tree.insert('', 'end', values=ligne)
 			i += 1
 	
-	#TODO
+	
 	def verify_nb_subnet_inputs(self):
 		
 		nb : int = bu.to_int(self.nb_subnet.get())
@@ -408,15 +409,12 @@ class Page3(tk.Frame):
 	def show_number_of_subnets(self, event):
 
 		# On récupère le résultat du contrôleur
-		#TODO : arrondir le nombre de subnet a l'exposant 2 le plus proche (haut)
-		#TODO : verifier les entrers utilisateur
 		if not self.verify_nb_subnet_inputs():
 			return
 		nb_reseau_voulu : int = int(self.nb_subnet.get())
 		nb_machines_max : int = int(self.controller.controller_machine_per_sub_nb(int(self.nb_subnet.get()), self.network_entry.get(), self.mask_entry.get()))
 		response : bool = messagebox.askyesno("Nombre de machines par sous-réseaux", f"Nombre de machine par sous-réseaux calculés : {nb_machines_max}")
 		if response:
-			print("user said yes")
 			self.change_nb_machines_inputs(nb_reseau_voulu)
 			pass
 		#nb_subnets = len(result)
@@ -464,7 +462,6 @@ class Page3(tk.Frame):
 		for input_widget in self.nb_machine_inputs:
 			if not self._verify_nb_machine_per_subnet(input_widget, message_on_error=False):
 				if input_widget.get() != "":
-					#TODO: utiliser des couleurs plus douces
 					input_widget.configure({"background": "light coral"})
 				else:
 					input_widget.configure({"background": "white"})
@@ -530,7 +527,6 @@ class Page3(tk.Frame):
 		# ============== Inputs groupe 1 ==================
 		# Adresse réseau
 
-		#XXX : l'adresse réseau peu etre incorrect et quand meme accepter (ex: 192.168.0.1 avec un masque /24 ne devrais pas passer?)
 		tk.Label(self, text="Adresse réseau:", font=P2_FONT).grid(row=1, column=0, padx=5, pady=5, sticky="e")
 		self.network_entry = tk.Entry(self, font=P2_FONT, width=20)
 		self.network_entry.bind("<Return>",lambda x : self._apply_changes_from_inputs_of_group1())
@@ -603,7 +599,6 @@ class Page3(tk.Frame):
 
 class PopupSaveAndLoad(tk.Toplevel):
 
-	#FIXME erreur lorsque l'on vérifie que les nombre de machines soient bien entrés (si pas entrer sauvegardés quand même)
 	def save_subnetting_data(self, page3, subnetting_name):
 		if(subnetting_name==""):
 			messagebox.showerror("Erreur", "Veuillez entrer un nom de découpe")
@@ -647,11 +642,9 @@ class PopupSaveAndLoad(tk.Toplevel):
 	
 		for i in range(len(self.subnettings)):
 			# subnettings[i][0] représente le nom de la découpe i
-			print("Découpe: ", self.subnettings[i][0])
 			tk.Label(self.scrollable_frame.inner, text=self.subnettings[i][0], font=P3_FONT).grid(row=i+1, column=0, pady=5)
 			#lambda index=i --> afin que i soit sauvegardé en même temps que l'event (sinon i sera égal au dernier indice de la liste)
 			tk.Button(self.scrollable_frame.inner, text="📂", font=P3_FONT, command= lambda index=i: self.load_subnetting_data(page3, self.subnettings[index])).grid(row=i+1, column=1)
-			print()
 			tk.Button(self.scrollable_frame.inner, text="     🗑️", font=P3_FONT, command= lambda index=i: self.delete_subnetting(page3, self.subnettings[index][0])).grid(row=i+1, column=2)
 		
 	def __init__(self, parent, controller  : 'GUIController.GUIController', page3):
