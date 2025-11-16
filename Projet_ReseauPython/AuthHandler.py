@@ -76,7 +76,6 @@ def _session_process(connexion):
             return False #la session ne peut pas être vide
         now = int(time.time())
         if now >= old_session.session_expiration_time:
-            print("❌ Session expirée")
             return False
 
         # signature attendue
@@ -90,7 +89,6 @@ def _session_process(connexion):
     try:
         while True:
             commande, args = connexion.recv()
-            print(commande, args)
             if commande == "create_session":
                 user_name: str = None
                 password: str = None
@@ -114,7 +112,6 @@ def _session_process(connexion):
                     #vérification de l'ancienne session
                     
                     if not _verify_session(old_session=old_session):
-                        print("❌ Signature invalide (token falsifié ?)")
                         connexion.send(None)
                         continue
                 else:
@@ -203,7 +200,6 @@ class session:
         self.user_name = user_name
         self.session_expiration_time = 0 # temps actuel en secondes depuis 1970 + durée de vie (apres ce temps la session n'est plus valide)
         self.random_per_session = secrets.token_urlsafe(8) # chaîne aléatoire unique par session (8 bytes encodés en base64 urlsafe (pas de + ou /))
-        print(self.random_per_session)
         self.signature = None
 
 
