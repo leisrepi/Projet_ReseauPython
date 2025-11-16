@@ -60,6 +60,9 @@ def validate_mask_format(mask, *, classful: bool = None):
         InvalidMaskException : Si le masque est invalide
         MaskNotInRangeException : Si le masque n'est pas dans les bornes autorisées (/8 à /29 = 255.0.0.0 à 255.255.255.248)
     """
+    if mask is None or mask == "":
+        raise InvalidMaskException("Veuillez entrer un masque.")
+
     mask = mask.strip()
     # Vérification du format du masque (peut importe si classful ou classless)
     if(classful is None):
