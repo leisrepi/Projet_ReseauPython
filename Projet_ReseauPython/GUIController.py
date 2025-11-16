@@ -144,7 +144,7 @@ class GUIController:
             self.disconnect()
             return
         time_left = self.session.session_expiration_time - time.time()
-        if time_left <= 115:
+        if time_left <= 595:
             self.session = AuthHandler.refresh_session(self.session)
             print("refreshed")
     #TODO : vérifier les entrées utilisateur avant de lancer le calcul (si elles ne sont pas vides et sont valides)
