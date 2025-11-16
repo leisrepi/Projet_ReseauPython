@@ -216,7 +216,7 @@ class GUIController:
         
         return max_machine_per_subnet
 
-    def controller_create_number_of_subnets_input(self, page3 : GUIHandler.Page3, nb_subnet_voulue, subnet, mask):
+    def controller_create_number_of_subnets_input(self, page3 : GUIHandler.Page3, nb_subnet_voulue, subnet, mask, confirmation = True):
         print(nb_subnet_voulue, subnet, mask)
         #TODO : verifier les entrers utilisateur, retour si erreur, et création des champs
         nb_subnet_voulue : int = bu.to_int(nb_subnet_voulue)
@@ -226,8 +226,10 @@ class GUIController:
         
         page3.data['nb_max_machines_per_subnet'] = max_machine_per_subnet
         #Demander a l'utilisateur si ce nombre de machine maximal lui convient
-        if msg.askyesno("Confirmation", f"Le nombre de machine par sous réseau maximal sera de: {max_machine_per_subnet}. Voulez-vous continuer ?") == False:
-            return None
+        if confirmation:
+            print(confirmation)
+            if msg.askyesno("Confirmation", f"Le nombre de machine par sous réseau maximal sera de: {max_machine_per_subnet}. Voulez-vous continuer ?") == False:
+                return None
 
         #TODO : hardcoder
         page3.change_nb_machines_inputs(nb_subnet_voulue)
@@ -338,6 +340,13 @@ class GUIController:
         #on remplit les champs
         page3.nb_subnet.delete(0, tk.END)
         page3.nb_subnet.insert(0, str(len(subnetting_data)))
+        #page3._apply_changes_from_inputs_of_group1()
+        self.controller_create_number_of_subnets_input(page3,
+                                                       page3.nb_subnet.get(),
+                                                       page3.network_entry.get(),
+                                                       page3.mask_entry.get(),
+                                                       confirmation=False
+                                                       )
         page3.change_nb_machines_inputs(len(subnetting_data))
         for i in range (len(subnetting_data)):
             page3.nb_machine_inputs[i].delete(0, tk.END)
