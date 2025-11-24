@@ -20,6 +20,7 @@ import AuthHandler
 import BasicUtilies as bu
 import DBHandler
 import NetworkHandler
+from SubnettingData import SubnettingData
 from AppException import InvalidMaskException, MaskNotInRangeException
 from NetworkHandler import create_network, define_mask_by_ip_class, validate_mask_format
 from SubnetHandler import calculate_step, calculate_subnetting
@@ -53,6 +54,7 @@ class GUIController:
         self._initialized = True
         self._events: List[str] = []
         self.session = None
+        self.subnetting_data = SubnettingData()
 
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
         self.root.title("NO_NAME_SET")
@@ -173,8 +175,10 @@ class GUIController:
             list_nb_machines.append(value)
 
         return (
-            calculate_subnetting(network, page3.data["nb_max_machines_per_subnet"], int(page3.nb_subnet.get())),
-            calculate_step(page3.data["nb_max_machines_per_subnet"]),
+            calculate_subnetting(
+                network, self.subnetting_data.nb_max_machines_per_subnet, int(page3.nb_subnet.get())
+            ),
+            calculate_step(self.subnetting_data.nb_max_machines_per_subnet),
             network.num_addresses - 2,
         )
 
@@ -206,8 +210,32 @@ class GUIController:
         if max_machine_per_subnet < 2:
             msg.showerror("Erreur", "Le nombre de sous-réseaux demandé est trop élevé pour le réseau donné.")
             return None
-        page3.data["nb_max_machines_per_subnet"] = max_machine_per_subnet
+        self.subnetting_data.network = subnet
+        self.subnetting_data.mask = mask
+        self.subnetting_data.nb_max_machines_per_subnet = max_machine_per_subnet
         return max_machine_per_subnet
+
+    def validate_nb_subnets(self, nb_subnet_value: str) -> Optional[int]:
+        nb_subnets = bu.to_int(nb_subnet_value)
+        if nb_subnets is None or nb_subnets <= 0 or nb_subnets > 100:
+            msg.showerror("Erreur", "Le nombre de sous-réseaux doit être positif et inférieur ou égal à 100.")
+            return None
+        return nb_subnets
+
+    def validate_machine_per_subnet(self, value: str) -> Optional[int]:
+        machines = bu.to_int(value)
+        if machines is None or machines < 0:
+            msg.showerror("Erreur", "Le nombre de machines par sous-réseau doit être un entier positif.")
+            return None
+
+        if machines > self.subnetting_data.nb_max_machines_per_subnet:
+            msg.showerror(
+                "Erreur",
+                f"Le nombre de machines par sous-réseau ne doit pas dépasser {self.subnetting_data.nb_max_machines_per_subnet}.",
+            )
+            return None
+
+        return machines
 
     def controller_create_number_of_subnets_input(self, page3: "GUIHandler.Page3", nb_subnet_voulue, subnet, mask, confirmation=True):
         nb_subnet_voulue: int = bu.to_int(nb_subnet_voulue)
@@ -215,7 +243,9 @@ class GUIController:
         if max_machine_per_subnet is None:
             return None
 
-        page3.data["nb_max_machines_per_subnet"] = max_machine_per_subnet
+        self.subnetting_data.nb_max_machines_per_subnet = max_machine_per_subnet
+        self.subnetting_data.nb_subnets = nb_subnet_voulue
+        self.subnetting_data.ensure_machine_slots(nb_subnet_voulue)
         if confirmation:
             if not msg.askyesno(
                 "Confirmation",
@@ -286,11 +316,13 @@ class GUIController:
         return network.network_address, network.broadcast_address, subnet.network_address, subnet.broadcast_address
 
     def controller_load_subnetting_data(self, page3: "GUIHandler.Page3", data):
-        page3.data["subneting_name"] = data[0]
+        self.subnetting_data.subnetting_name = data[0]
         page3.network_entry.delete(0, tk.END)
         page3.network_entry.insert(0, data[2])
         page3.mask_entry.delete(0, tk.END)
         page3.mask_entry.insert(0, data[3])
+        self.subnetting_data.network = data[2]
+        self.subnetting_data.mask = data[3]
 
         subnetting_data = DBHandler.get_all_subnets_of_a_subnetting(self.session, data[0])
         if subnetting_data is None:
@@ -310,9 +342,11 @@ class GUIController:
             confirmation=False,
         )
         page3.change_nb_machines_inputs(len(subnetting_data))
+        self.subnetting_data.nb_machines_per_subnet = []
         for i in range(len(subnetting_data)):
             page3.nb_machine_inputs[i].delete(0, tk.END)
             page3.nb_machine_inputs[i].insert(0, str(subnetting_data[i][1]))
+            self.subnetting_data.nb_machines_per_subnet.append(subnetting_data[i][1])
 
         page3.show_subnetting_result()
 
@@ -329,6 +363,7 @@ class GUIController:
         subnet_address = page3.network_entry.get()
         subnet_mask = page3.mask_entry.get()
         list_nb_machines = [bu.to_int(input_widget.get()) for input_widget in page3.nb_machine_inputs]
+        self.subnetting_data.nb_machines_per_subnet = [value or 0 for value in list_nb_machines]
 
         DBHandler.insert_decoupe(self.session, subneting_name, subnet_address, subnet_mask)
 

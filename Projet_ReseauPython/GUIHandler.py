@@ -383,7 +383,9 @@ class Page3(tk.Frame):
         
         # On récupère le résultat du contrôleur
         result, step, nb_machines_max = self.controller.controller_subnetting_calculation(self)
-        self.total_nb_machines.config(text=str(int(self.nb_subnet.get())*self.data["nb_max_machines_per_subnet"]))
+        self.total_nb_machines.config(
+            text=str(int(self.nb_subnet.get()) * self.controller.subnetting_data.nb_max_machines_per_subnet)
+        )
         self.step.config(text=step)
         # On remplit le tableau avec le résultat
         i = 0
@@ -397,22 +399,19 @@ class Page3(tk.Frame):
             i += 1
     
     
-    def verify_nb_subnet_inputs(self):
-        
-        nb : int = bu.to_int(self.nb_subnet.get())
-        if nb is None or nb <= 0 or nb > 100:
-            messagebox.showerror("Erreur", "Le nombre de sous-réseaux doit être positif et inférieur ou égal à 100.")
-            return False
-        return True
-
     def show_number_of_subnets(self, event):
 
-        # On récupère le résultat du contrôleur
-        if not self.verify_nb_subnet_inputs():
+        nb_reseau_voulu = self.controller.validate_nb_subnets(self.nb_subnet.get())
+        if nb_reseau_voulu is None:
             return
-        nb_reseau_voulu : int = int(self.nb_subnet.get())
-        nb_machines_max : int = int(self.controller.controller_machine_per_sub_nb(int(self.nb_subnet.get()), self.network_entry.get(), self.mask_entry.get()))
-        response : bool = messagebox.askyesno("Nombre de machines par sous-réseaux", f"Nombre de machine par sous-réseaux calculés : {nb_machines_max}")
+        nb_machines_max: int = int(
+            self.controller.controller_machine_per_sub_nb(
+                int(self.nb_subnet.get()), self.network_entry.get(), self.mask_entry.get()
+            )
+        )
+        response: bool = messagebox.askyesno(
+            "Nombre de machines par sous-réseaux", f"Nombre de machine par sous-réseaux calculés : {nb_machines_max}"
+        )
         if response:
             self.change_nb_machines_inputs(nb_reseau_voulu)
             pass
@@ -421,6 +420,7 @@ class Page3(tk.Frame):
         #self.nb_subnet.insert(0, str(nb_subnets))
     def change_nb_machines_inputs(self, nb_subnets : int):
         #clean_tk_element(self.nb_machine_inputs_container.inner)
+        self.subnetting_data.ensure_machine_slots(nb_subnets)
         if len(self.nb_machine_inputs) < nb_subnets: #plus petit, on dois en ajouter:
             for i in range(len(self.nb_machine_inputs), nb_subnets):
                 tk.Label(self.nb_machine_inputs_container.inner, text=f"Nb machine sous-réseau ({i+1}):", font=P2_FONT).grid(row=i, column=0, padx=5, pady=5, sticky="e")
@@ -470,28 +470,17 @@ class Page3(tk.Frame):
                 input_widget.configure({"background": "white"})
 
 
-    #pour respecter le mvc, cela devrais etre dans le controller
     def _verify_nb_machine_per_subnet(self, input_widget, message_on_error : bool = True, travel_to_input : bool = False) -> bool:
-        input_widget_value : int = bu.to_int(input_widget.get())
-        if input_widget_value is None or input_widget_value < 0:
-            if message_on_error:
-                messagebox.showerror("Erreur", "Le nombre de machines par sous-réseau doit être un entier positif.")
-                if travel_to_input:
-                    input_widget.focus_set()
-                    input_widget.select_range(0, tk.END)
-                    self.nb_machine_inputs_container.scroll_to_widget(input_widget)
+        validated_value = self.controller.validate_machine_per_subnet(input_widget.get())
+        if validated_value is None:
+            if message_on_error and travel_to_input:
+                input_widget.focus_set()
+                input_widget.select_range(0, tk.END)
+                self.nb_machine_inputs_container.scroll_to_widget(input_widget)
             return False
-        if input_widget_value > self.data['nb_max_machines_per_subnet']:
-            if message_on_error:    
-                messagebox.showerror("Erreur", f"Le nombre de machines par sous-réseau ne doit pas dépasser {self.data['nb_max_machines_per_subnet']}.")
-                if travel_to_input:
-                    input_widget.focus_set()
-                    input_widget.select_range(0, tk.END)
-                    self.nb_machine_inputs_container.scroll_to_widget(input_widget)
-            return False
-        #si input correct, on remet la valeur corrigée (ex: si l'utilisateur a mis des espaces)
-        input_widget.delete(0,tk.END)
-        input_widget.insert(0,input_widget_value)
+
+        input_widget.delete(0, tk.END)
+        input_widget.insert(0, validated_value)
         return True
     
     def _focus_to_next_nb_machine_input(self,input_widget):
@@ -509,13 +498,7 @@ class Page3(tk.Frame):
         super().__init__(parent, pady=10, width=controller.root.winfo_screenwidth())
         self.controller : 'GUIController.GUIController' = controller
         self.nb_machine_inputs : {tk.Widget} = []
-        self.data = {}
-        self.data['nb_subnets'] = 0
-        self.data['nb_max_machines_per_subnet'] = 0
-        self.data['nb_machines_per_subnet'] = []
-        self.data['network'] = None
-        self.data['mask'] = None
-        self.data['subneting_name'] = None
+        self.subnetting_data = controller.subnetting_data
         # #--------------------------------------|Découpage en sous-réseaux|--------------------------------------
         # Bouton pour ouvrir la fenêtre de load and save les découpes 
         tk.Button(self, text="Gestion découpe réseau", font=P2_FONT, command=self.show_save_and_load_window).grid(row=0, column=0, padx=5, pady=5, sticky="e")
