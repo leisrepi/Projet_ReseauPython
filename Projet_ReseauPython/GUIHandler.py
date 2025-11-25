@@ -471,7 +471,9 @@ class Page3(tk.Frame):
 
 
     def _verify_nb_machine_per_subnet(self, input_widget, message_on_error : bool = True, travel_to_input : bool = False) -> bool:
-        validated_value = self.controller.validate_machine_per_subnet(input_widget.get())
+        validated_value = self.controller.validate_machine_per_subnet(
+            input_widget.get(), show_message=message_on_error
+        )
         if validated_value is None:
             if message_on_error and travel_to_input:
                 input_widget.focus_set()

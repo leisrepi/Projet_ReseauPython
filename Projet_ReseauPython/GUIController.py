@@ -12,7 +12,7 @@ import threading
 import time
 import tkinter as tk
 import tkinter.messagebox as msg
-from typing import TYPE_CHECKING, List, Optional
+from typing import List, Optional
 
 import AddressHandler
 import AppException
@@ -20,15 +20,12 @@ import AuthHandler
 import BasicUtilies as bu
 import DBHandler
 import NetworkHandler
+import GUIHandler
 from SubnettingData import SubnettingData
 from AppException import InvalidMaskException, MaskNotInRangeException
 from NetworkHandler import create_network, define_mask_by_ip_class, validate_mask_format
 from SubnetHandler import calculate_step, calculate_subnetting
 from ipaddress import AddressValueError
-
-if TYPE_CHECKING:  # Importation différée pour éviter les cycles
-    import GUIHandler
-
 
 class GUIController:
     """Singleton qui orchestre les évènements de l'interface Tkinter."""
@@ -222,17 +219,19 @@ class GUIController:
             return None
         return nb_subnets
 
-    def validate_machine_per_subnet(self, value: str) -> Optional[int]:
+    def validate_machine_per_subnet(self, value: str, show_message: bool = True) -> Optional[int]:
         machines = bu.to_int(value)
         if machines is None or machines < 0:
-            msg.showerror("Erreur", "Le nombre de machines par sous-réseau doit être un entier positif.")
+            if show_message:
+                msg.showerror("Erreur", "Le nombre de machines par sous-réseau doit être un entier positif.")
             return None
 
         if machines > self.subnetting_data.nb_max_machines_per_subnet:
-            msg.showerror(
-                "Erreur",
-                f"Le nombre de machines par sous-réseau ne doit pas dépasser {self.subnetting_data.nb_max_machines_per_subnet}.",
-            )
+            if show_message:
+                msg.showerror(
+                    "Erreur",
+                    f"Le nombre de machines par sous-réseau ne doit pas dépasser {self.subnetting_data.nb_max_machines_per_subnet}.",
+                )
             return None
 
         return machines
